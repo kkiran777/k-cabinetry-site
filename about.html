@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | K Cabinetry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { serif: ['Playfair Display', 'serif'], sans: ['Poppins', 'sans-serif'] },
+                    colors: { gold: '#c9a227', dark: '#111111', cream: '#f8f6f3' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-sans bg-white text-gray-800">
+    <header class="border-b border-gray-100 sticky top-0 bg-white z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3">
+                <img src="https://kcabinetry.net/wp-content/uploads/2023/11/cropped-kcabinetry-1__1_-removebg-preview_240x.webp" alt="K Cabinetry" class="h-14 w-auto">
+            </a>
+            <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
+                <a href="index.html" class="hover:text-gold">Home</a>
+                <a href="about.html" class="text-gold">About</a>
+                <a href="products.html" class="hover:text-gold">Products</a>
+                <a href="capabilities.html" class="hover:text-gold">Capabilities</a>
+                <a href="contact.html" class="hover:text-gold">Contact</a>
+            </nav>
+            <a href="contact.html" class="bg-gold text-white px-5 py-2 text-sm font-medium hover:bg-yellow-700 transition">Request Quote</a>
+        </div>
+    </header>
+    <section class="bg-cream py-20">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <p class="text-gold tracking-widest text-sm uppercase mb-3">About</p>
+            <h1 class="font-serif text-5xl mb-6">Earning Trust Through Craftsmanship</h1>
+            <p class="text-lg text-gray-600">K Cabinetry is built on decades of experience delivering high-quality cabinets, countertops, and vanities for residential and commercial projects across North America.</p>
+        </div>
+    </section>
+    <section class="py-20">
+        <div class="max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+            <div>
+                <h2 class="font-serif text-3xl mb-5">Our Story</h2>
+                <p class="text-gray-600 leading-relaxed mb-4">With production capabilities in the United States and Europe, we combine modern manufacturing technology with traditional attention to detail. Our teams focus on consistent quality, reliable schedules, and finishes that meet the expectations of developers, contractors, and designers.</p>
+                <p class="text-gray-600 leading-relaxed">Whether the project calls for classic shaker profiles, contemporary frameless construction, or coordinated surfaces, we approach each order with the same commitment to precision.</p>
+            </div>
+            <img src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format&fit=crop" alt="Kitchen detail" class="w-full h-80 object-cover">
+        </div>
+    </section>
+    <section class="py-16 bg-dark text-white">
+        <div class="max-w-5xl mx-auto px-6 text-center">
+            <h2 class="font-serif text-3xl mb-4">Operational Strength</h2>
+            <p class="text-gray-400 max-w-2xl mx-auto">Strategic facilities and modern equipment allow us to support both large multi-unit orders and detailed custom work while maintaining finish consistency and delivery reliability.</p>
+        </div>
+    </section>
+    <footer class="bg-black text-gray-400 py-12">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-8">
+            <div>
+                <img src="https://kcabinetry.net/wp-content/uploads/2023/11/cropped-kcabinetry-1__1_-removebg-preview_240x.webp" alt="K Cabinetry" class="h-12 mb-4">
+                <p class="text-sm">Cabinets & countertops made with expertise.</p>
+            </div>
+            <div>
+                <p class="text-white font-medium mb-3">Hours</p>
+                <p class="text-sm">Monday–Friday: 8:30 AM – 4:30 PM<br>Saturday–Sunday: Closed</p>
+            </div>
+            <div>
+                <p class="text-white font-medium mb-3">Contact</p>
+                <p class="text-sm">Austell, Georgia<br>(470) 243-8599<br>info@kcabinetry.net</p>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-6 mt-8 pt-6 border-t border-gray-800 text-xs">© 2026 K Cabinetry</div>
+    </footer>
+</body>
+</html>
