@@ -1,0 +1,147 @@
+{
+  "brand": {
+    "name": "K Cabinetry",
+    "logo": "https://kcabinetry.net/wp-content/uploads/2023/11/cropped-kcabinetry-1__1_-removebg-preview_240x.webp",
+    "tagline": "Cabinets & countertops made with expertise.",
+    "phone": "(470) 243-8599",
+    "email": "info@kcabinetry.net",
+    "address": "The Bluffs, 7800 Austell Rd, Austell, GA 30168",
+    "hours": "Monday–Friday · 8:30 AM – 4:30 PM",
+    "instagram": "",
+    "facebook": ""
+  },
+  "hero": {
+    "eyebrow": "K CABINETRY / KITCHENS • BATHS • INTERIORS",
+    "title": "Crafted for the way you live.",
+    "description": "Considered cabinetry, beautiful surfaces, and the finishing details that make a space feel entirely yours.",
+    "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2200&q=85",
+    "ctaLabel": "Explore our collections"
+  },
+  "home": {
+    "introLabel": "THE ART OF EVERYDAY LIVING",
+    "introTitle": "Design that feels like home.",
+    "introText": "Your space should work beautifully and look extraordinary. We bring together thoughtful design, quality materials and hands-on project support to help every room feel complete.",
+    "introImage": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=85",
+    "productsTitle": "Materials that make the moment.",
+    "productsText": "Discover the finishes, forms and details that define your space.",
+    "valueTitle": "A thoughtful approach, from start to finish.",
+    "benefits": [
+      {
+        "number": "01",
+        "title": "Purposeful design",
+        "body": "Solutions that balance how a space looks with how it needs to work."
+      },
+      {
+        "number": "02",
+        "title": "Material expertise",
+        "body": "Explore cabinetry and surface options with a knowledgeable partner."
+      },
+      {
+        "number": "03",
+        "title": "Project partnership",
+        "body": "Clear communication and support from the first conversation onward."
+      }
+    ],
+    "projectsTitle": "Made for real life. Designed to inspire.",
+    "projectsText": "A look at the spaces, details, and finishes that inspire our work.",
+    "ctaTitle": "Your next favorite space starts here.",
+    "ctaText": "Tell us what you are imagining. We would love to explore what is possible together.",
+    "ctaImage": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=2000&q=85"
+  },
+  "products": [
+    {
+      "id": "cabinets",
+      "category": "01 / CABINETRY",
+      "title": "Kitchen Cabinets",
+      "short": "Beautiful organization. Effortless living.",
+      "description": "From timeless Shaker profiles to clean-lined contemporary styles, explore cabinet solutions that bring warmth, texture and functionality to the kitchen.",
+      "image": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1400&q=85",
+      "features": "Shaker and modern styles\nPractical storage planning\nFinish and color options"
+    },
+    {
+      "id": "surfaces",
+      "category": "02 / SURFACES",
+      "title": "Countertops & Surfaces",
+      "short": "A perfect finish for every room.",
+      "description": "Natural-inspired textures and contemporary surface selections bring lasting character to countertops, islands, and statement spaces.",
+      "image": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1400&q=85",
+      "features": "Granite and premium surfaces\nStone-inspired aesthetics\nKitchen and vanity applications"
+    },
+    {
+      "id": "vanities",
+      "category": "03 / BATHROOMS",
+      "title": "Bathroom Vanities",
+      "short": "Everyday rituals, elevated.",
+      "description": "Create a calmer and more functional bathroom with smartly considered vanities, elegant surfaces and beautifully coordinated finishes.",
+      "image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1400&q=85",
+      "features": "Modern and traditional looks\nFunctional bathroom storage\nCoordinated countertop choices"
+    },
+    {
+      "id": "custom",
+      "category": "04 / MADE FOR YOU",
+      "title": "Project Solutions",
+      "short": "Thoughtfully tailored to your vision.",
+      "description": "Every project has its own requirements. Start a conversation with our team about cabinetry, material selections, and solutions for your scope.",
+      "image": "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=85",
+      "features": "Residential and commercial inquiries\nFinish guidance\nProject-focused support"
+    }
+  ],
+  "projects": [
+    {
+      "title": "Warm Minimalism",
+      "category": "Kitchens",
+      "description": "Quiet neutrals and warm material tones.",
+      "image": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=85"
+    },
+    {
+      "title": "Timeless Contrast",
+      "category": "Kitchens",
+      "description": "Crisp cabinetry, bold details and luminous surfaces.",
+      "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85"
+    },
+    {
+      "title": "A Moment of Calm",
+      "category": "Bathrooms",
+      "description": "Layered textures with refined vanity details.",
+      "image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=85"
+    },
+    {
+      "title": "Modern Heritage",
+      "category": "Interiors",
+      "description": "Intentional materials for lasting beauty.",
+      "image": "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=85"
+    }
+  ],
+  "about": {
+    "eyebrow": "ABOUT K CABINETRY",
+    "title": "Good design begins with listening.",
+    "intro": "K Cabinetry brings cabinetry, countertops and a considered eye for detail together, helping homeowners and project teams create interiors that feel personal, practical and enduring.",
+    "image": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1400&q=85",
+    "storyTitle": "Beyond cabinets, a commitment to the whole space.",
+    "storyText": "Based in the Atlanta area, we work with clients to explore the materials, finishes and practical details that define their kitchens, baths and interiors. Our approach is grounded in collaboration, craftsmanship and a belief that well-designed spaces improve daily life.",
+    "steps": [
+      {
+        "number": "01",
+        "title": "Discover",
+        "description": "Share your ideas, needs, inspiration and goals."
+      },
+      {
+        "number": "02",
+        "title": "Design & select",
+        "description": "Explore cabinetry, surfaces and details that work together."
+      },
+      {
+        "number": "03",
+        "title": "Bring it together",
+        "description": "Coordinate the next steps for your project with our team."
+      }
+    ]
+  },
+  "contact": {
+    "eyebrow": "START A CONVERSATION",
+    "title": "Let's create something beautiful.",
+    "introduction": "Working on a new kitchen, bathroom or larger project? Send us a few details and our team will help you explore the next step.",
+    "formEndpoint": "",
+    "note": "For the fastest response, include your location, project type and approximate timeline."
+  }
+}
