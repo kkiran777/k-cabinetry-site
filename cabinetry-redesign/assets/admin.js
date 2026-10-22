@@ -10,6 +10,7 @@ function undoRedo(undo){const source=undo?history:future,dest=undo?future:histor
 const $=(s,root=document)=>root.querySelector(s);
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const schemas={
+ pages:{title:"Pages Manager",description:"Create and manage your new pages."},
  canvas:{title:"Design canvas",description:"Position elements and motion effects"},
  builder:{title:"Visual page builder",description:"Drag, reorder, edit and live-preview your homepage."},
 
@@ -40,7 +41,7 @@ const schemas={
  contact:{title:"Contact page",description:"The contact page copy and optional form endpoint.",fields:[
  ["eyebrow","Small heading"],["title","Page heading"],["introduction","Introduction","textarea"],["note","Form instructions","textarea"],["formEndpoint","HTTPS form submission endpoint"]]}
 };
-const sections=["canvas","builder","brand","design","announcement","navigation","sections","buttons","hero","home","benefits","products","projects","about","steps","contact","seo"];
+const sections=["pages","canvas","builder","brand","design","announcement","navigation","sections","buttons","hero","home","benefits","products","projects","about","steps","contact","seo"];
 const status=(message,problem=false,selector="#editor-status")=>{
  const el=$(selector); if(!el)return;el.textContent=message||"";el.classList.toggle("error",!!problem);
 };
@@ -256,7 +257,33 @@ function renderCanvas(){
   markDirty();render();updatePreview();
  });
 }
+
+function renderPageManager(){
+ data.settings.pages ||= [];
+ $("#editor-nav").innerHTML=sections.map(id=>'<button type="button" class="'+(id===active?"active":"")+'" data-tab="'+id+'">'+esc(schemas[id].title)+'</button>').join("");
+ $("#editor").innerHTML='<div class="panel-header"><h2>Pages Manager</h2><p>Create, duplicate, edit and hide pages without code. Click Publish changes when done.</p></div>'+
+ '<div class="builder-panel"><strong>Create new page</strong><div class="field"><input id="new-page-title" placeholder="e.g. Kitchen Cabinets"></div><button type="button" data-pm="create">+ Create Page</button></div>'+
+ data.settings.pages.map((p,i)=>'<article class="builder-panel"><strong>'+esc(p.title)+'</strong><p>page.html?slug='+esc(p.slug)+'</p>'+
+ fieldHTML("Title",null,"settings.pages."+i+".title")+fieldHTML("Navigation label",null,"settings.pages."+i+".navLabel")+
+ fieldHTML("Introduction","textarea","settings.pages."+i+".intro")+fieldHTML("Image","image","settings.pages."+i+".image")+
+ fieldHTML("SEO title",null,"settings.pages."+i+".seoTitle")+fieldHTML("SEO description","textarea","settings.pages."+i+".description")+
+ fieldHTML("Page visible","checkbox","settings.pages."+i+".visible")+
+ '<div class="builder-tool-row"><button type="button" data-pm="duplicate" data-index="'+i+'">Duplicate</button><button type="button" data-pm="delete" data-index="'+i+'">Delete</button></div></article>').join("");
+}
+function pageManagerAction(event){
+ const b=event.target.closest("[data-pm]");if(!b)return;
+ const pages=data.settings.pages,kind=b.dataset.pm,i=Number(b.dataset.index);
+ if(kind==="create"){const title=$("#new-page-title")?.value.trim();if(!title)return status("Enter a title first.",true);
+   const slug=makeSlug(title);if(!slug)return status("Invalid title.",true);
+   snapshot();pages.push({slug,title,navLabel:title,intro:"Edit this introduction",image:"",seoTitle:title,description:"",visible:true});data.settings.pageBlocks||={};data.settings.pageBlocks["custom:"+slug]=[];
+ }else if(pages[i]&&kind==="duplicate"){const slug=makeSlug(pages[i].title+" copy");snapshot();pages.splice(i+1,0,{...pages[i],slug,title:pages[i].title+" (copy)"});data.settings.pageBlocks["custom:"+slug]=[];
+ }else if(pages[i]&&kind==="delete"){if(!confirm("Delete page? You can cancel by not publishing."))return;snapshot();const deleted=pages.splice(i,1)[0];delete data.settings.pageBlocks?.["custom:"+deleted.slug];data.settings.customBlocks=(data.settings.customBlocks||[]).filter(b=>b.page!=="custom:"+deleted.slug);
+ }else return;
+ markDirty();render();
+}
+function makeSlug(title){const base=title.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,55);if(!base)return "";let slug=base,n=2;while(data.settings.pages.some(p=>p.slug===slug))slug=base+"-"+n++;return slug;}
 function render(){
+ if(active==="pages"){renderPageManager();return;}
  if(active==="canvas"){renderCanvas();return;}
  if(active==="builder"){renderBuilder();return;}
  const schema=schemas[active];if(!schema||!data)return;
@@ -417,6 +444,7 @@ $("#editor").addEventListener("change",event=>{
  if(el&&/\.(image|logo)$/.test(el.dataset.path))render();
 });
 $("#editor").addEventListener("click",event=>{
+ if(active==="pages"&&event.target.closest("[data-pm]")){pageManagerAction(event);return;}
  const add=event.target.closest("[data-canvas-add]");if(add&&active==="canvas"){snapshot();data.settings.designCanvas.elements.push({id:"el-"+Date.now(),type:add.dataset.canvasAdd,text:"New element",src:"",href:"./contact.html",x:10,y:20,width:30,fontSize:28,color:"#ffffff",motion:"none",visible:true});markDirty();render();updatePreview();return;}
  const del=event.target.closest("[data-canvas-delete]");if(del&&active==="canvas"){snapshot();data.settings.designCanvas.elements.splice(Number(del.dataset.canvasDelete),1);markDirty();render();updatePreview();return;}
  const toggle=event.target.closest("[data-canvas-toggle]");if(toggle&&active==="canvas"){snapshot();data.settings.designCanvas.enabled=!data.settings.designCanvas.enabled;markDirty();render();updatePreview();return;}

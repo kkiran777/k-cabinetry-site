@@ -53,12 +53,12 @@
     return '<section class="section custom-block custom-text-block" data-custom-id="'+id+'"><div class="shell">'+common+'</div></section>';
   };
   const arrangeSections = d => {
-    const order=page==="home"?(d.settings?.sectionOrder||[]):(d.settings?.pageBlocks?.[page]||[]);
+    const order=page==="home"?(d.settings?.sectionOrder||[]):(d.settings?.pageBlocks?.[page==="custom"?"custom:"+pageSlug:page]||[]);
     const main=$("#main");if(!main)return;
     const selectors={ticker:".ticker",intro:".intro",collections:".collections",benefits:".benefits",projects:"section.projects",cta:".cta-photo"};
     const nodes={};if(page==="home")Object.entries(selectors).forEach(([key,selector])=>nodes[key]=main.querySelector(selector));
     for(const block of (d.settings?.customBlocks||[])){
-      if(!block||(block.page||"home")!==page||!/^custom-[a-z0-9-]+$/.test(block.id||""))continue;
+      if(!block||(block.page||"home")!==(page==="custom"?"custom:"+pageSlug:page)||!/^custom-[a-z0-9-]+$/.test(block.id||""))continue;
       const template=document.createElement("template");template.innerHTML=customBlockMarkup(block);
       const element=template.content.firstElementChild;if(!element)continue;
       main.appendChild(element);nodes[block.id]=element;
@@ -89,11 +89,12 @@
   const anchor = (href,label) => '<a class="text-link" href="'+esc(href)+'">'+esc(label)+' <span aria-hidden="true">↗</span></a>';
   const eyebrow = (text,dark=false) => '<p class="eyebrow'+(dark?' dark':'')+'">'+esc(text)+'</p>';
   const page = document.body.dataset.page || "home";
-  const urlFor = name => name === "home" ? "./index.html" : "./"+name+".html";
+  const pageSlug=new URLSearchParams(location.search).get("slug")||"";
+  const urlFor = name => name==="home"?"./index.html":name.startsWith("custom:")?"./page.html?slug="+encodeURIComponent(name.slice(7)):"./"+name+".html";
   const navItems=[["home","Home"],["about","About"],["products","Products"],["projects","Inspiration"],["contact","Contact"]];
   const header = d => {
     const b=d.brand||{};
-    const menu=(d.settings?.navigation||navItems.map(([page,label])=>({page,label,visible:true}))).filter(item=>item.visible!==false).map(item=>[item.page,item.label]).map(([id,label])=>'<a href="'+urlFor(id)+'" class="'+(page===id?'active':'')+'" '+(page===id?'aria-current="page"':'')+'>'+label+'</a>').join("");
+    const menu=[...(d.settings?.navigation||navItems.map(([page,label])=>({page,label,visible:true}))),...(d.settings?.pages||[]).filter(p=>p.visible!==false).map(p=>({page:"custom:"+p.slug,label:p.navLabel||p.title,visible:true}))].filter(item=>item.visible!==false).map(item=>[item.page,item.label]).map(([id,label])=>'<a href="'+urlFor(id)+'" class="'+(page===id?'active':'')+'" '+(page===id?'aria-current="page"':'')+'>'+label+'</a>').join("");
     return (d.settings?.announcementEnabled===false?"":'<div class="topline">'+esc(d.settings?.announcement||"Thoughtful design • Cabinets & countertops • Georgia")+'</div>')+
       '<header class="header" id="header"><div class="shell header-inner"><a class="brand" href="./index.html" aria-label="K Cabinetry home">'+photo(b.logo,"K Cabinetry gold emblem","logo","eager")+
       '<span class="brand-wordmark">K CABINETRY<small>FINE INTERIORS</small></span></a>'+
@@ -200,12 +201,20 @@
     });
     main.prepend(layer);main.classList.add("canvas-main");
   };
+  const customPage=d=>{
+    const p=(d.settings?.pages||[]).find(x=>x.slug===pageSlug&&x.visible!==false);
+    if(!p)return '<section class="section"><div class="shell"><h1>Page not found</h1><p><a href="./index.html">Return home</a></p></div></section>';
+    const img=safeImage(p.image);
+    return '<section class="section"><div class="shell"><p class="eyebrow dark">'+esc(p.eyebrow||"K CABINETRY")+'</p><h1 class="title">'+esc(p.title)+'</h1><p class="section-copy">'+esc(p.intro)+'</p>'+
+    (img?'<img style="max-width:100%;max-height:550px;object-fit:cover;margin-top:40px" src="'+img+'" alt="'+esc(p.title)+'">':"")+'</div></section>';
+  };
   const render = async (previewData=null) => {
     try {
       let d=previewData;
       if(!d){const response=await fetch(ROOT+"content/site.json",{cache:"no-store"});if(!response.ok)throw Error("Content unavailable");d=await response.json();}
       applySettings(d);
-      const sections={home,products,projects,about,contact};
+      if(page==="custom"){const custom=(d.settings?.pages||[]).find(x=>x.slug===pageSlug);if(custom){document.title=(custom.seoTitle||custom.title)+" | K Cabinetry";document.querySelector('meta[name="description"]')?.setAttribute("content",custom.description||"");}}
+      const sections={home,products,projects,about,contact,custom:customPage};
       $("#site").innerHTML=header(d)+'<main id="main">'+(sections[page]||home)(d)+'</main>'+footer(d);
       arrangeSections(d);
       applyVisibility(d);
