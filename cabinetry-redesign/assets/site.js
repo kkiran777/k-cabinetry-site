@@ -1,6 +1,31 @@
 (() => {
   "use strict";
   const ROOT = "./";
+  const applySettings = d => {
+    const s=d.settings||{},design=s.design||{},root=document.documentElement;
+    const colors={accent:"--gold",background:"--paper",dark:"--black",cream:"--cream"};
+    Object.entries(colors).forEach(([field,variable])=>{
+      const value=design[field];if(/^#[0-9a-f]{6}$/i.test(value||""))root.style.setProperty(variable,value);
+    });
+    const fonts={"Playfair Display":'"Playfair Display",Georgia,serif',"DM Sans":'"DM Sans",Arial,sans',"Manrope":'"Manrope",Arial,sans',Georgia:'Georgia,serif',Arial:'Arial,sans-serif'};
+    if(fonts[design.headingFont])root.style.setProperty("--serif",fonts[design.headingFont]);
+    if(fonts[design.bodyFont])root.style.setProperty("--sans",fonts[design.bodyFont]);
+    const styleText=String(design.customCSS||"");
+    if(styleText && styleText.length<10000){
+      const style=document.createElement("style");style.id="k-custom-style";style.textContent=styleText;document.head.appendChild(style);
+    }
+    const metadata=s.seo||{},prefix={home:"home",products:"products",projects:"projects",about:"about",contact:"contact"}[page]||"home";
+    const title=metadata[prefix+"Title"],desc=metadata[prefix+"Description"];
+    if(title)document.title=String(title)+" | K Cabinetry";
+    if(desc){document.querySelector('meta[name="description"]')?.setAttribute("content",desc);document.querySelector('meta[property="og:description"]')?.setAttribute("content",desc);}
+    if(title)document.querySelector('meta[property="og:title"]')?.setAttribute("content",String(title)+" | K Cabinetry");
+  };
+  const applyVisibility = d => {
+    const sections=d.settings?.sections||{};
+    const selectors={ticker:".ticker",intro:".intro",collections:".collections",benefits:".benefits",projects:"section.projects",cta:".cta-photo"};
+    Object.entries(selectors).forEach(([key,selector])=>{if(sections[key]===false)document.querySelector(selector)?.remove();});
+  };
+
   const $ = (selector, root=document) => root.querySelector(selector);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
   const safeImage = value => {
@@ -17,12 +42,12 @@
   const navItems=[["home","Home"],["about","About"],["products","Products"],["projects","Inspiration"],["contact","Contact"]];
   const header = d => {
     const b=d.brand||{};
-    const menu=navItems.map(([id,label])=>'<a href="'+urlFor(id)+'" class="'+(page===id?'active':'')+'" '+(page===id?'aria-current="page"':'')+'>'+label+'</a>').join("");
-    return '<div class="topline">Thoughtful design &nbsp; • &nbsp; Cabinets &amp; countertops &nbsp; • &nbsp; Georgia</div>'+
+    const menu=(d.settings?.navigation||navItems.map(([page,label])=>({page,label,visible:true}))).filter(item=>item.visible!==false).map(item=>[item.page,item.label]).map(([id,label])=>'<a href="'+urlFor(id)+'" class="'+(page===id?'active':'')+'" '+(page===id?'aria-current="page"':'')+'>'+label+'</a>').join("");
+    return (d.settings?.announcementEnabled===false?"":'<div class="topline">'+esc(d.settings?.announcement||"Thoughtful design • Cabinets & countertops • Georgia")+'</div>')+
       '<header class="header" id="header"><div class="shell header-inner"><a class="brand" href="./index.html" aria-label="K Cabinetry home">'+photo(b.logo,"K Cabinetry gold emblem","logo","eager")+
       '<span class="brand-wordmark">K CABINETRY<small>FINE INTERIORS</small></span></a>'+
       '<button type="button" class="menu-toggle" id="menu-toggle" aria-controls="primary-navigation" aria-expanded="false">Menu <span aria-hidden="true">☰</span></button>'+
-      '<nav class="nav" id="primary-navigation" aria-label="Main navigation">'+menu+'</nav>'+link("./contact.html","Request a quote").replace('class="btn"','class="btn head-action"')+
+      '<nav class="nav" id="primary-navigation" aria-label="Main navigation">'+menu+'</nav>'+link("./contact.html",d.settings?.buttons?.quote||"Request a quote").replace('class="btn"','class="btn head-action"')+
       '</div></header>';
   };
   const footer = d => {
@@ -30,7 +55,7 @@
     return '<footer class="footer"><div class="shell"><div class="footer-top"><div>'+
       '<a class="brand" href="./index.html">'+photo(b.logo,"K Cabinetry gold emblem","logo")+ '<span class="brand-wordmark">K CABINETRY<small>FINE INTERIORS</small></span></a>'+
       '<p class="footer-copy">'+esc(b.tagline)+'</p></div>'+
-      '<div><h4>Explore</h4><div class="footer-links">'+navItems.map(([id,l])=>'<a href="'+urlFor(id)+'">'+l+'</a>').join('')+'</div></div>'+
+      '<div><h4>Explore</h4><div class="footer-links">'+(d.settings?.navigation||navItems.map(([page,label])=>({page,label,visible:true}))).filter(item=>item.visible!==false).map(item=>[item.page,item.label]).map(([id,l])=>'<a href="'+urlFor(id)+'">'+l+'</a>').join('')+'</div></div>'+
       '<div><h4>Contact</h4><p><a href="tel:'+esc(String(b.phone||"").replace(/[^+\d]/g,""))+'">'+esc(b.phone)+'</a><br>'+
       '<a href="mailto:'+esc(b.email)+'">'+esc(b.email)+'</a></p><p>'+esc(b.address)+'</p></div>'+
       '<div><h4>Showroom hours</h4><p>'+esc(b.hours)+'</p><p><a href="./contact.html">Plan a visit ↗</a></p></div></div>'+
@@ -41,13 +66,13 @@
   const productCard=(p) => '<a class="product-card reveal" href="./products.html#'+esc(p.id)+'"><div class="photo">'+photo(p.image,p.title)+'</div><span class="round-arrow" aria-hidden="true">↗</span><div class="product-card-info"><div class="meta">'+esc(p.category)+'</div><h3>'+esc(p.title)+'</h3><p class="desc">'+esc(p.short)+'</p>'+anchor('./products.html#'+p.id,'Discover the collection')+'</div></a>';
   const projectCard=(p) => '<a href="./projects.html" class="project-card reveal">'+photo(p.image,p.title)+'<div class="project-caption"><div><small>'+esc(p.category)+'</small><h3>'+esc(p.title)+'</h3></div><b aria-hidden="true">↗</b></div></a>';
   const cta=(d)=>{const h=d.home||{};return '<section class="cta-photo">'+photo(h.ctaImage||d.hero?.image,"Beautiful interior")+
-      '<div class="shell cta-inner">'+eyebrow("LET'S MAKE IT HAPPEN")+'<h2 class="title">'+esc(h.ctaTitle||"Let's bring your vision to life.")+'</h2><p>'+esc(h.ctaText||"We would love to hear about your project.")+'</p>'+link("./contact.html","Get in touch")+'</div></section>';};
+      '<div class="shell cta-inner">'+eyebrow("LET'S MAKE IT HAPPEN")+'<h2 class="title">'+esc(h.ctaTitle||"Let's bring your vision to life.")+'</h2><p>'+esc(h.ctaText||"We would love to hear about your project.")+'</p>'+link("./contact.html",d.settings?.buttons?.cta||"Get in touch")+'</div></section>';};
   const home = d =>{
     const h=d.home||{}, hero=d.hero||{}, products=d.products||[], projects=d.projects||[], benefits=h.benefits||[];
     return '<section class="hero">'+photo(hero.image,"Elegant K Cabinetry kitchen interior","hero-img","eager")+
       '<div class="shell hero-inner"><div class="hero-content">'+eyebrow(hero.eyebrow)+'<h1 class="display">'+esc(hero.title)+'</h1>'+
       '<p class="hero-desc">'+esc(hero.description)+'</p><div class="hero-actions">'+link("./products.html",hero.ctaLabel||"Explore collections")+
-      link("./contact.html","Let's talk about your project",true)+'</div></div></div><div class="hero-side">INTERIORS WITH INTENTION — K CABINETRY</div><div class="hero-bottom"></div></section>'+
+      link("./contact.html",d.settings?.buttons?.heroSecondary||"Let's talk about your project",true)+'</div></div></div><div class="hero-side">INTERIORS WITH INTENTION — K CABINETRY</div><div class="hero-bottom"></div></section>'+
       '<div class="ticker"><div class="shell ticker-inner"><div class="ticker-item"><span>✦</span> Timeless cabinetry</div><div class="ticker-item"><span>✦</span> Beautiful surfaces</div><div class="ticker-item"><span>✦</span> Personal service</div></div></div>'+
       '<section class="section intro"><div class="shell intro-grid"><div class="intro-copy reveal">'+eyebrow(h.introLabel,true)+'<h2 class="title">'+esc(h.introTitle)+'</h2>'+
       '<p class="section-copy">'+esc(h.introText)+'</p>'+anchor("./about.html","Our story")+'</div><div class="image-frame reveal">'+photo(h.introImage,"Warm architectural interior")+
@@ -108,8 +133,10 @@
       const response=await fetch(ROOT+"content/site.json",{cache:"no-store"});
       if(!response.ok) throw Error("Content unavailable");
       const d=await response.json();
+      applySettings(d);
       const sections={home,products,projects,about,contact};
       $("#site").innerHTML=header(d)+'<main id="main">'+(sections[page]||home)(d)+'</main>'+footer(d);
+      applyVisibility(d);
       $("#year").textContent=new Date().getFullYear();
       const head=$("#header"),toggle=$("#menu-toggle");
       const sticky=()=>head.classList.toggle("scrolled",scrollY>65);

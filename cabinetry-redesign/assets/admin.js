@@ -6,6 +6,15 @@ let token="",data=null,sha="",dirty=false,active="brand",busy=false;
 const $=(s,root=document)=>root.querySelector(s);
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const schemas={
+
+ announcement:{title:"Announcement bar",description:"Edit the thin banner at the top of your website.",fields:[["announcementEnabled","Show announcement bar","checkbox"],["announcement","Announcement text","textarea"]],basePath:"settings"},
+ design:{title:"Brand colors & typography",description:"Update your site-wide appearance without editing CSS.",fields:[["accent","Gold / accent color","color"],["background","Page background","color"],["dark","Dark panels / header","color"],["cream","Cream background","color"],["headingFont","Heading font","font"],["bodyFont","Body font","font"],["customCSS","Advanced custom CSS","textarea"]],basePath:"settings.design"},
+ navigation:{title:"Menus & navigation",description:"Change menu names, visibility and their order.",arrayPath:"settings.navigation",fields:[["label","Menu label"],["page","Page key: home, about, products, projects or contact"],["visible","Show in menu","checkbox"]]},
+ sections:{title:"Homepage visibility",description:"Show or hide entire sections on your homepage.",fields:[["ticker","Feature strip","checkbox"],["intro","Welcome / about section","checkbox"],["collections","Product collection cards","checkbox"],["benefits","Why choose us section","checkbox"],["projects","Inspiration feature","checkbox"],["cta","Bottom call-to-action","checkbox"]],basePath:"settings.sections"},
+ buttons:{title:"Buttons & calls to action",description:"Edit the text of the primary navigation and marketing buttons.",fields:[["heroSecondary","Secondary hero button"],["cta","Bottom banner button"],["quote","Navigation quote button"]],basePath:"settings.buttons"},
+ seo:{title:"Search engine settings",description:"Manage browser tab titles and search-result descriptions for each page.",fields:[
+ ["homeTitle","Homepage SEO title"],["homeDescription","Homepage description","textarea"],["productsTitle","Products SEO title"],["productsDescription","Products description","textarea"],["projectsTitle","Inspiration SEO title"],["projectsDescription","Inspiration description","textarea"],["aboutTitle","About SEO title"],["aboutDescription","About description","textarea"],["contactTitle","Contact SEO title"],["contactDescription","Contact description","textarea"]],basePath:"settings.seo"},
+
  brand:{title:"Brand & contact",description:"Your logo, business contact details and footer information.",fields:[
  ["name","Business name"],["logo","Brand logo","image"],["tagline","Tagline","textarea"],["phone","Phone number"],["email","Public email address"],["address","Business address","textarea"],["hours","Business hours"],["instagram","Instagram URL"],["facebook","Facebook URL"]]},
  hero:{title:"Homepage hero",description:"The first section visitors see when they land on your site.",fields:[
@@ -25,7 +34,7 @@ const schemas={
  contact:{title:"Contact page",description:"The contact page copy and optional form endpoint.",fields:[
  ["eyebrow","Small heading"],["title","Page heading"],["introduction","Introduction","textarea"],["note","Form instructions","textarea"],["formEndpoint","HTTPS form submission endpoint"]]}
 };
-const sections=["brand","hero","home","benefits","products","projects","about","steps","contact"];
+const sections=["brand","design","announcement","navigation","sections","buttons","hero","home","benefits","products","projects","about","steps","contact","seo"];
 const status=(message,problem=false,selector="#editor-status")=>{
  const el=$(selector); if(!el)return;el.textContent=message||"";el.classList.toggle("error",!!problem);
 };
@@ -47,10 +56,14 @@ function putValue(path,value){
  obj[parts[parts.length-1]]=value;markDirty();
 }
 function fieldHTML(label,type,path){
- const value=String(getValue(path)??"");
+ const rawValue=getValue(path);
+ const value=String(rawValue??"");
  const key=esc(path),caption=esc(label);
  let control;
- if(type==="textarea")control='<textarea data-path="'+key+'" rows="4">'+esc(value)+'</textarea>';
+ if(type==="checkbox")control='<input type="checkbox" data-path="'+key+'" '+(rawValue===true?"checked":"")+' aria-label="'+caption+'">';
+ else if(type==="color")control='<input type="color" data-path="'+key+'" value="'+(/^#[0-9a-f]{6}$/i.test(value)?esc(value):"#caa967")+'">';
+ else if(type==="font")control='<select data-path="'+key+'">'+["Playfair Display","DM Sans","Manrope","Georgia","Arial"].map(v=>'<option value="'+esc(v)+'" '+(value===v?"selected":"")+' >'+esc(v)+'</option>').join("")+'</select>';
+ else if(type==="textarea")control='<textarea data-path="'+key+'" rows="4">'+esc(value)+'</textarea>';
  else control='<input type="text" data-path="'+key+'" value="'+esc(value)+'" autocomplete="off">';
  if(type==="image"){
    const src=/^https:\/\//i.test(value)?value:/^(?:\.\/)?media\//i.test(value)?"../"+value:"";
@@ -76,12 +89,13 @@ function render(){
        '<button type="button" data-action="delete" data-index="'+i+'">Remove</button></div></div>'+
        '<div class="fields">'+schema.fields.map(([k,label,type])=>fieldHTML(label,type,schema.arrayPath+"."+i+"."+k)).join("")+'</div></article>';
    });
-   html+='<button type="button" class="add-row" data-action="add">+ Add '+(active==="products"?"product":active==="projects"?"gallery item":"step")+'</button>';
+   html+='<button type="button" class="add-row" data-action="add">+ Add '+(active==="products"?"product":active==="projects"?"gallery item":active==="navigation"?"menu link":"step")+'</button>';
  } else {
-   html+='<div class="fields">'+schema.fields.map(([k,label,type])=>fieldHTML(label,type,active+"."+k)).join("")+'</div>';
+   html+='<div class="fields">'+schema.fields.map(([k,label,type])=>fieldHTML(label,type,(schema.basePath||active)+"."+k)).join("")+'</div>';
    if(active==="contact")html+='<div class="notice"><strong>Contact form:</strong> Without a form endpoint, visitors can prepare an email from the contact page. For automatic submissions, paste an HTTPS endpoint from a form provider that accepts JSON POST requests, and configure that provider to permit requests from your hosted site.</div>';
    if(active==="brand")html+='<div class="notice">The logo shown by default is the supplied K Cabinetry emblem hosted on your existing website. You can upload it here to save a copy into your new GitHub site.</div>';
  }
+ if(active==="navigation")html+='<div class="notice">Menu links use page keys: home, about, products, projects, contact. Hiding a menu link does not disable direct page access.</div>';
  $("#editor").innerHTML=html;
 }
 function encode(text){
@@ -115,6 +129,7 @@ async function signIn(event){
  try{
    const item=await github("GET",DOC);
    sha=item.sha;data=JSON.parse(decode(item.content));
+   if(!data.settings)throw Error("Content settings unavailable; please reload the page.");
    $("#login").hidden=true;$("#dashboard").hidden=false;$("#signout").hidden=false;
    $("#token").value="";
    active="brand";markClean();render();status("Connected. Choose a section to begin.");
@@ -146,6 +161,7 @@ function editList(event){
  if(action==="add"){
    const record=Object.fromEntries(schema.fields.map(([key])=>[key,""]));
    if(active==="products")record.id="collection-"+Date.now();
+   if(active==="navigation"){record.page="home";record.visible=true;}
    if(active==="benefits"||active==="steps")record.number=String(items.length+1).padStart(2,"0");
    items.push(record);
  }else if(action==="delete"){
@@ -192,7 +208,7 @@ $("#editor-nav").addEventListener("click",event=>{
 });
 $("#editor").addEventListener("input",event=>{
  const el=event.target.closest("[data-path]");
- if(el)putValue(el.dataset.path,el.value);
+ if(el)putValue(el.dataset.path,el.type==="checkbox"?el.checked:el.value);
 });
 $("#editor").addEventListener("change",event=>{
  const el=event.target.closest("[data-path]");

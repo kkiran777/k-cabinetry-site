@@ -143,5 +143,70 @@
     "introduction": "Working on a new kitchen, bathroom or larger project? Send us a few details and our team will help you explore the next step.",
     "formEndpoint": "",
     "note": "For the fastest response, include your location, project type and approximate timeline."
+  },
+  "settings": {
+    "announcement": "Thoughtful design • Cabinets & countertops • Georgia",
+    "announcementEnabled": true,
+    "design": {
+      "accent": "#caa967",
+      "background": "#fefdfa",
+      "dark": "#12140f",
+      "cream": "#f5f3ed",
+      "headingFont": "Playfair Display",
+      "bodyFont": "DM Sans",
+      "customCSS": ""
+    },
+    "navigation": [
+      {
+        "label": "Home",
+        "page": "home",
+        "visible": true
+      },
+      {
+        "label": "About",
+        "page": "about",
+        "visible": true
+      },
+      {
+        "label": "Products",
+        "page": "products",
+        "visible": true
+      },
+      {
+        "label": "Inspiration",
+        "page": "projects",
+        "visible": true
+      },
+      {
+        "label": "Contact",
+        "page": "contact",
+        "visible": true
+      }
+    ],
+    "sections": {
+      "ticker": true,
+      "intro": true,
+      "collections": true,
+      "benefits": true,
+      "projects": true,
+      "cta": true
+    },
+    "buttons": {
+      "heroSecondary": "Let's talk about your project",
+      "cta": "Get in touch",
+      "quote": "Request a quote"
+    },
+    "seo": {
+      "homeTitle": "Beautiful Kitchens, Cabinets & Countertops",
+      "homeDescription": "K Cabinetry creates beautiful kitchens, bathrooms and interiors with thoughtful cabinetry and premium surfaces in Georgia.",
+      "productsTitle": "Cabinets, Countertops & Vanities",
+      "productsDescription": "Explore cabinetry, countertops, and vanity options from K Cabinetry.",
+      "projectsTitle": "Design Inspiration & Project Gallery",
+      "projectsDescription": "Explore kitchen, bathroom and interior design inspiration from K Cabinetry.",
+      "aboutTitle": "About Us",
+      "aboutDescription": "Learn about K Cabinetry's approach to thoughtful cabinetry, surfaces and design.",
+      "contactTitle": "Contact & Request a Consultation",
+      "contactDescription": "Contact K Cabinetry in Austell, Georgia about your cabinetry, surface or bathroom project."
+    }
   }
 }
