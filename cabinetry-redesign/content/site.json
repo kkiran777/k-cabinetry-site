@@ -207,6 +207,14 @@
       "aboutDescription": "Learn about K Cabinetry's approach to thoughtful cabinetry, surfaces and design.",
       "contactTitle": "Contact & Request a Consultation",
       "contactDescription": "Contact K Cabinetry in Austell, Georgia about your cabinetry, surface or bathroom project."
-    }
+    },
+    "sectionOrder": [
+      "ticker",
+      "intro",
+      "collections",
+      "benefits",
+      "projects",
+      "cta"
+    ]
   }
 }

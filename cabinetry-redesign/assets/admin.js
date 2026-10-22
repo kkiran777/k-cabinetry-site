@@ -6,6 +6,7 @@ let token="",data=null,sha="",dirty=false,active="brand",busy=false;
 const $=(s,root=document)=>root.querySelector(s);
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const schemas={
+ builder:{title:"Visual page builder",description:"Drag, reorder, edit and live-preview your homepage."},
 
  announcement:{title:"Announcement bar",description:"Edit the thin banner at the top of your website.",fields:[["announcementEnabled","Show announcement bar","checkbox"],["announcement","Announcement text","textarea"]],basePath:"settings"},
  design:{title:"Brand colors & typography",description:"Update your site-wide appearance without editing CSS.",fields:[["accent","Gold / accent color","color"],["background","Page background","color"],["dark","Dark panels / header","color"],["cream","Cream background","color"],["headingFont","Heading font","font"],["bodyFont","Body font","font"],["customCSS","Advanced custom CSS","textarea"]],basePath:"settings.design"},
@@ -34,7 +35,7 @@ const schemas={
  contact:{title:"Contact page",description:"The contact page copy and optional form endpoint.",fields:[
  ["eyebrow","Small heading"],["title","Page heading"],["introduction","Introduction","textarea"],["note","Form instructions","textarea"],["formEndpoint","HTTPS form submission endpoint"]]}
 };
-const sections=["brand","design","announcement","navigation","sections","buttons","hero","home","benefits","products","projects","about","steps","contact","seo"];
+const sections=["builder","brand","design","announcement","navigation","sections","buttons","hero","home","benefits","products","projects","about","steps","contact","seo"];
 const status=(message,problem=false,selector="#editor-status")=>{
  const el=$(selector); if(!el)return;el.textContent=message||"";el.classList.toggle("error",!!problem);
 };
@@ -53,7 +54,7 @@ function getValue(path){return path.split(".").reduce((obj,key)=>obj?.[key],data
 function putValue(path,value){
  const parts=path.split(".");let obj=data;
  for(let i=0;i<parts.length-1;i++){if(obj[parts[i]]==null)return;obj=obj[parts[i]];}
- obj[parts[parts.length-1]]=value;markDirty();
+ obj[parts[parts.length-1]]=value;markDirty();updatePreview();
 }
 function fieldHTML(label,type,path){
  const rawValue=getValue(path);
@@ -75,7 +76,82 @@ function fieldHTML(label,type,path){
  const wide=type==="textarea"||label.length>32;
  return '<div class="field'+(wide?' wide':'')+'"><label>'+caption+'</label>'+control+'</div>';
 }
+
+// Visual page builder: hero remains fixed; all other homepage sections can be reordered.
+const BLOCKS=[
+ {id:"ticker",name:"Trust & service strip",detail:"Three value statements below the hero",tab:"sections"},
+ {id:"intro",name:"Welcome / about",detail:"Large feature image and introduction",tab:"home"},
+ {id:"collections",name:"Product collections",detail:"Featured product cards",tab:"products"},
+ {id:"benefits",name:"Why choose us",detail:"Three service highlights",tab:"benefits"},
+ {id:"projects",name:"Inspiration showcase",detail:"Featured project imagery",tab:"projects"},
+ {id:"cta",name:"Contact banner",detail:"Final call-to-action section",tab:"home"}
+];
+let previewTimer=null,draggedId=null,previewMode="desktop",previewPage="home";
+function updatePreview(){
+ if(active!=="builder")return;
+ clearTimeout(previewTimer);
+ previewTimer=setTimeout(()=>{
+   const frame=$("#builder-frame");
+   if(frame?.contentWindow&&data)frame.contentWindow.postMessage({type:"K_CABINETRY_PREVIEW",payload:data},location.origin);
+ },180);
+}
+function renderBuilder(){
+ const root=$("#editor");
+ if(!data.settings)data.settings={};
+ if(!Array.isArray(data.settings.sectionOrder))data.settings.sectionOrder=BLOCKS.map(b=>b.id);
+ const order=[...new Set([...data.settings.sectionOrder,...BLOCKS.map(b=>b.id)])].filter(id=>BLOCKS.some(b=>b.id===id));
+ const cards=order.map(id=>{
+  const b=BLOCKS.find(block=>block.id===id),visible=data.settings.sections?.[id]!==false;
+  return '<div class="builder-card" draggable="true" data-block="'+esc(id)+'" tabindex="0" aria-label="'+esc(b.name)+'">'+
+   '<span class="drag-handle" title="Drag to reorder">⠿</span><div class="builder-card-body"><strong>'+esc(b.name)+'</strong><small>'+esc(b.detail)+'</small></div>'+
+   '<label class="builder-visibility"><input type="checkbox" data-block-visible="'+esc(id)+'" '+(visible?"checked":"")+' aria-label="Show '+esc(b.name)+'"> Show</label>'+
+   '<button type="button" data-block-edit="'+esc(b.tab)+'">Edit</button>'+
+   '<button type="button" data-block-up="'+esc(id)+'" aria-label="Move up">↑</button><button type="button" data-block-down="'+esc(id)+'" aria-label="Move down">↓</button></div>';
+ }).join("");
+ const pageButtons=[["home","Home"],["products","Products"],["projects","Gallery"],["about","About"],["contact","Contact"]].map(([key,label])=>'<button type="button" data-preview-page="'+key+'" class="'+(previewPage===key?"selected":"")+'">'+label+'</button>').join("");
+ root.innerHTML='<div class="panel-header"><h2>Visual page builder</h2><p>Drag cards to reorder your homepage, switch sections on or off and see your unpublished edits instantly.</p></div>'+
+ '<div class="builder-layout"><div class="builder-controls"><div class="builder-label">Homepage layout <span>Drag ⠿ to reorder</span></div>'+
+ '<div id="builder-blocks">'+cards+'</div><p class="help-line">The hero stays at the top. To change its text and image, use the Homepage hero tab.</p>'+
+ '<div class="builder-panel"><strong>Quick-edit homepage</strong><p>Changes appear immediately in the live preview.</p>'+
+ fieldHTML("Hero headline","textarea","hero.title")+fieldHTML("Hero description","textarea","hero.description")+
+ fieldHTML("Welcome headline",null,"home.introTitle")+fieldHTML("Closing banner headline",null,"home.ctaTitle")+
+ '</div><div class="builder-panel"><strong>Tools</strong><div class="builder-tool-row"><button type="button" data-builder-action="reset">Restore default order</button><button type="button" data-builder-action="showall">Show all sections</button></div></div></div>'+
+ '<div class="builder-preview"><div class="builder-preview-tools"><div class="preview-pages">'+pageButtons+'</div>'+
+ '<div class="builder-size"><button type="button" data-preview-mode="desktop" class="'+(previewMode==="desktop"?"selected":"")+'">Desktop</button>'+
+ '<button type="button" data-preview-mode="mobile" class="'+(previewMode==="mobile"?"selected":"")+'">Mobile</button></div></div>'+
+ '<div class="builder-viewport '+previewMode+'"><iframe id="builder-frame" title="Live website preview" loading="eager" src="../'+(previewPage==="home"?"index":previewPage)+'.html?preview=1"></iframe></div>'+
+ '<p class="help-line">This preview uses your unsaved edits. Only “Publish changes” updates the public website.</p></div></div>';
+ const frame=$("#builder-frame");frame.addEventListener("load",updatePreview);
+ updatePreview();
+}
+function orderChange(from,to){
+ const order=data.settings.sectionOrder;
+ const fromIndex=order.indexOf(from),toIndex=order.indexOf(to);
+ if(fromIndex<0||toIndex<0||fromIndex===toIndex)return;
+ order.splice(fromIndex,1);order.splice(toIndex,0,from);
+ markDirty();render();updatePreview();
+}
+function builderClick(event){
+ const el=event.target.closest("button");
+ if(!el)return;
+ const edit=el.dataset.blockEdit;
+ if(edit){active=edit;render();return;}
+ const up=el.dataset.blockUp,down=el.dataset.blockDown;
+ if(up||down){
+   const id=up||down,order=data.settings.sectionOrder,index=order.indexOf(id);
+   const other=order[index+(up?-1:1)];if(other)orderChange(id,other);return;
+ }
+ const mode=el.dataset.previewMode;
+ if(mode){previewMode=mode;$(".builder-viewport")?.classList.toggle("mobile",mode==="mobile");$(".builder-viewport")?.classList.toggle("desktop",mode!=="mobile");document.querySelectorAll("[data-preview-mode]").forEach(b=>b.classList.toggle("selected",b.dataset.previewMode===mode));return;}
+ const pageKey=el.dataset.previewPage;
+ if(pageKey){previewPage=pageKey;render();return;}
+ const action=el.dataset.builderAction;
+ if(action==="reset"){data.settings.sectionOrder=BLOCKS.map(b=>b.id);markDirty();render();updatePreview();}
+ if(action==="showall"){BLOCKS.forEach(b=>{data.settings.sections[b.id]=true;});markDirty();render();updatePreview();}
+}
+
 function render(){
+ if(active==="builder"){renderBuilder();return;}
  const schema=schemas[active];if(!schema||!data)return;
  $("#editor-nav").innerHTML=sections.map(id=>'<button type="button" class="'+(id===active?"active":"")+'" data-tab="'+id+'" aria-current="'+(id===active?"page":"false")+'">'+esc(schemas[id].title)+'</button>').join("");
  let html='<div class="panel-header"><h2>'+esc(schema.title)+'</h2><p>'+esc(schema.description)+'</p></div>';
@@ -132,7 +208,7 @@ async function signIn(event){
    if(!data.settings)throw Error("Content settings unavailable; please reload the page.");
    $("#login").hidden=true;$("#dashboard").hidden=false;$("#signout").hidden=false;
    $("#token").value="";
-   active="brand";markClean();render();status("Connected. Choose a section to begin.");
+   active="builder";markClean();render();status("Connected. Choose a section to begin.");
  }catch(err){token="";status(err.message,true,"#login-status");}
  finally{btn.disabled=false;}
 }
@@ -170,7 +246,7 @@ function editList(event){
  }else if(action==="up"&&i>0){[items[i-1],items[i]]=[items[i],items[i-1]];}
  else if(action==="down"&&i<items.length-1){[items[i],items[i+1]]=[items[i+1],items[i]];}
  else return;
- markDirty();render();
+ markDirty();render();updatePreview();
 }
 async function uploadImage(path){
  const picker=document.createElement("input");picker.type="file";picker.accept="image/png,image/jpeg,image/webp,image/avif,image/gif";
@@ -206,6 +282,19 @@ $("#editor-nav").addEventListener("click",event=>{
  const target=event.target.closest("[data-tab]");
  if(target){active=target.dataset.tab;render();}
 });
+$("#editor").addEventListener("change",event=>{
+ const box=event.target.closest("[data-block-visible]");
+ if(box && active==="builder"){putValue("settings.sections."+box.dataset.blockVisible,box.checked);}
+});
+$("#editor").addEventListener("dragstart",event=>{
+ const card=event.target.closest("[data-block]");if(!card)return;
+ draggedId=card.dataset.block;event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",draggedId);
+});
+$("#editor").addEventListener("dragover",event=>{if(event.target.closest("[data-block]")){event.preventDefault();event.dataTransfer.dropEffect="move";}});
+$("#editor").addEventListener("drop",event=>{
+ const target=event.target.closest("[data-block]");if(target&&draggedId){event.preventDefault();orderChange(draggedId,target.dataset.block);}draggedId=null;
+});
+$("#editor").addEventListener("dragend",()=>{draggedId=null;});
 $("#editor").addEventListener("input",event=>{
  const el=event.target.closest("[data-path]");
  if(el)putValue(el.dataset.path,el.type==="checkbox"?el.checked:el.value);
@@ -215,6 +304,7 @@ $("#editor").addEventListener("change",event=>{
  if(el&&/\.(image|logo)$/.test(el.dataset.path))render();
 });
 $("#editor").addEventListener("click",event=>{
+ if(active==="builder")builderClick(event);
  const upload=event.target.closest("[data-upload]");
  if(upload){uploadImage(upload.dataset.upload);return;}
  editList(event);

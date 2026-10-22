@@ -20,6 +20,19 @@
     if(desc){document.querySelector('meta[name="description"]')?.setAttribute("content",desc);document.querySelector('meta[property="og:description"]')?.setAttribute("content",desc);}
     if(title)document.querySelector('meta[property="og:title"]')?.setAttribute("content",String(title)+" | K Cabinetry");
   };
+  const arrangeSections = d => {
+    if(page!=="home")return;
+    const order=d.settings?.sectionOrder||[];
+    const main=$("#main");if(!main)return;
+    const selectors={ticker:".ticker",intro:".intro",collections:".collections",benefits:".benefits",projects:"section.projects",cta:".cta-photo"};
+    const nodes={};Object.entries(selectors).forEach(([key,selector])=>nodes[key]=main.querySelector(selector));
+    const hero=main.querySelector(".hero");
+    let preceding=hero;
+    for(const id of [...new Set([...order,...Object.keys(selectors)])]){
+      const node=nodes[id];if(!node)continue;
+      preceding.after(node);preceding=node;
+    }
+  };
   const applyVisibility = d => {
     const sections=d.settings?.sections||{};
     const selectors={ticker:".ticker",intro:".intro",collections:".collections",benefits:".benefits",projects:"section.projects",cta:".cta-photo"};
@@ -128,14 +141,14 @@
       '<button class="btn" type="submit">Prepare inquiry <span aria-hidden="true">↗</span></button><div class="form-status" role="status" aria-live="polite"></div>'+
       '<p class="tiny">Without a configured form service, this opens your email application to send the inquiry. No message is stored on the website.</p></form></section>';
   };
-  const render = async () => {
+  const render = async (previewData=null) => {
     try {
-      const response=await fetch(ROOT+"content/site.json",{cache:"no-store"});
-      if(!response.ok) throw Error("Content unavailable");
-      const d=await response.json();
+      let d=previewData;
+      if(!d){const response=await fetch(ROOT+"content/site.json",{cache:"no-store"});if(!response.ok)throw Error("Content unavailable");d=await response.json();}
       applySettings(d);
       const sections={home,products,projects,about,contact};
       $("#site").innerHTML=header(d)+'<main id="main">'+(sections[page]||home)(d)+'</main>'+footer(d);
+      arrangeSections(d);
       applyVisibility(d);
       $("#year").textContent=new Date().getFullYear();
       const head=$("#header"),toggle=$("#menu-toggle");
@@ -182,5 +195,12 @@
       $("#site").innerHTML='<main class="loading"><h1>K Cabinetry</h1><p>We could not load the website content. Please refresh or contact <a href="mailto:info@kcabinetry.net">info@kcabinetry.net</a>.</p></main>';
     }
   };
+  if(new URLSearchParams(location.search).get("preview")==="1" && window.parent!==window){
+    window.addEventListener("message",event=>{
+      if(event.origin!==location.origin||event.source!==window.parent||event.data?.type!=="K_CABINETRY_PREVIEW")return;
+      if(!event.data.payload || typeof event.data.payload!=="object")return;
+      render(event.data.payload);
+    });
+  }
   render();
 })();
