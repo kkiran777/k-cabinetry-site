@@ -20,15 +20,34 @@
     if(desc){document.querySelector('meta[name="description"]')?.setAttribute("content",desc);document.querySelector('meta[property="og:description"]')?.setAttribute("content",desc);}
     if(title)document.querySelector('meta[property="og:title"]')?.setAttribute("content",String(title)+" | K Cabinetry");
   };
+
+  const customBlockMarkup = b => {
+    const type=String(b.type||"text"),heading=esc(b.title||""),body=esc(b.body||""),id=esc(b.id||"");
+    const image=safeImage(b.image||"");
+    const buttonText=esc(b.buttonText||""),buttonUrl=String(b.buttonUrl||"").trim();
+    const safeLink=/^(https:\/\/|\.\/|#|\/)/i.test(buttonUrl)?esc(buttonUrl):"./contact.html";
+    const action=buttonText?'<a class="btn" href="'+safeLink+'">'+buttonText+' <span aria-hidden="true">↗</span></a>':"";
+    const common='<div class="custom-section-copy"><p class="eyebrow dark">K CABINETRY / FEATURE</p><h2 class="title">'+heading+'</h2><p class="section-copy">'+body+'</p>'+action+'</div>';
+    if(type==="image")return '<section class="section custom-block custom-image-block" data-custom-id="'+id+'"><div class="shell custom-image-grid">'+(image?'<img src="'+image+'" alt="'+heading+'" loading="lazy">':"")+common+'</div></section>';
+    if(type==="banner")return '<section class="section custom-block custom-banner" data-custom-id="'+id+'"'+(image?' style="background-image:linear-gradient(#10170dcc,#10170dcc),url(&quot;'+image+'&quot;)"':'')+'><div class="shell">'+common+'</div></section>';
+    if(type==="spacer")return '<div class="custom-block custom-spacer" data-custom-id="'+id+'" aria-hidden="true"></div>';
+    return '<section class="section custom-block custom-text-block" data-custom-id="'+id+'"><div class="shell">'+common+'</div></section>';
+  };
   const arrangeSections = d => {
     if(page!=="home")return;
     const order=d.settings?.sectionOrder||[];
     const main=$("#main");if(!main)return;
     const selectors={ticker:".ticker",intro:".intro",collections:".collections",benefits:".benefits",projects:"section.projects",cta:".cta-photo"};
     const nodes={};Object.entries(selectors).forEach(([key,selector])=>nodes[key]=main.querySelector(selector));
+    for(const block of (d.settings?.customBlocks||[])){
+      if(!block||!/^custom-[a-z0-9-]+$/.test(block.id||""))continue;
+      const template=document.createElement("template");template.innerHTML=customBlockMarkup(block);
+      const element=template.content.firstElementChild;if(!element)continue;
+      main.appendChild(element);nodes[block.id]=element;
+    }
     const hero=main.querySelector(".hero");
     let preceding=hero;
-    for(const id of [...new Set([...order,...Object.keys(selectors)])]){
+    for(const id of [...new Set([...order,...Object.keys(nodes)])]){
       const node=nodes[id];if(!node)continue;
       preceding.after(node);preceding=node;
     }
@@ -37,6 +56,7 @@
     const sections=d.settings?.sections||{};
     const selectors={ticker:".ticker",intro:".intro",collections:".collections",benefits:".benefits",projects:"section.projects",cta:".cta-photo"};
     Object.entries(selectors).forEach(([key,selector])=>{if(sections[key]===false)document.querySelector(selector)?.remove();});
+    (d.settings?.customBlocks||[]).forEach(b=>{if(b.visible===false)document.querySelector('[data-custom-id="'+b.id+'"]')?.remove();});
   };
 
   const $ = (selector, root=document) => root.querySelector(selector);

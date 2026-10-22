@@ -95,12 +95,57 @@ function updatePreview(){
    if(frame?.contentWindow&&data)frame.contentWindow.postMessage({type:"K_CABINETRY_PREVIEW",payload:data},location.origin);
  },180);
 }
+
+const CUSTOM_TYPES={
+ text:{label:"Text section",description:"Heading, description and optional button"},
+ image:{label:"Image + text",description:"Image beside editable text and a button"},
+ banner:{label:"Full-width banner",description:"Statement text with optional background photo"},
+ spacer:{label:"Section spacer",description:"A flexible vertical gap between sections"}
+};
+function ensureCustom(){
+ data.settings ||= {};
+ data.settings.customBlocks ||= [];
+ data.settings.sectionOrder ||= BLOCKS.map(b=>b.id);
+}
+function newCustomBlock(type,original){
+ ensureCustom();
+ const id="custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,6);
+ const b={id,type,title:"Your next great idea.",body:"Edit this section's text, photo and button in the page builder.",image:"",buttonText:"Learn more",buttonUrl:"./contact.html",visible:true,...(original||{})};
+ b.id=id;b.type=type;data.settings.customBlocks.push(b);data.settings.sectionOrder.push(id);
+ markDirty();render();updatePreview();
+}
+function customCard(b){
+ const type=CUSTOM_TYPES[b.type]||CUSTOM_TYPES.text;
+ const visible=b.visible!==false;
+ return '<div class="builder-card custom-card" draggable="true" data-block="'+esc(b.id)+'" tabindex="0"><span class="drag-handle" title="Drag to reorder">⠿</span>'+
+ '<div class="builder-card-body"><strong>'+esc(b.title||type.label)+'</strong><small>'+esc(type.label)+'</small></div>'+
+ '<label class="builder-visibility"><input type="checkbox" data-custom-visible="'+esc(b.id)+'" '+(visible?"checked":"")+'> Show</label>'+
+ '<button type="button" data-custom-edit="'+esc(b.id)+'">Edit</button>'+
+ '<button type="button" data-custom-duplicate="'+esc(b.id)+'" title="Duplicate block">⧉</button>'+
+ '<button type="button" data-block-up="'+esc(b.id)+'">↑</button><button type="button" data-block-down="'+esc(b.id)+'">↓</button>'+
+ '<button type="button" data-custom-delete="'+esc(b.id)+'" title="Delete section">×</button></div>';
+}
+function customEditPanel(){
+ const selected=window.kSelectedCustom;
+ const b=data.settings.customBlocks.find(x=>x.id===selected);
+ if(!b)return "";
+ const i=data.settings.customBlocks.findIndex(x=>x.id===selected);
+ return '<div class="builder-panel custom-editor"><strong>Editing: '+esc(CUSTOM_TYPES[b.type]?.label||"Custom section")+'</strong>'+
+ '<p>Edit the selected block below. Updates show immediately in the preview.</p>'+
+ fieldHTML("Heading",null,"settings.customBlocks."+i+".title")+
+ fieldHTML("Description","textarea","settings.customBlocks."+i+".body")+
+ (b.type!=="spacer"?fieldHTML("Section image / background","image","settings.customBlocks."+i+".image"):"")+
+ (b.type!=="spacer"?fieldHTML("Button label",null,"settings.customBlocks."+i+".buttonText"):"")+
+ (b.type!=="spacer"?fieldHTML("Button link",null,"settings.customBlocks."+i+".buttonUrl"):"")+
+ '<button type="button" data-custom-done="1">Done editing</button></div>';
+}
 function renderBuilder(){
  const root=$("#editor");
- if(!data.settings)data.settings={};
+ ensureCustom();
  if(!Array.isArray(data.settings.sectionOrder))data.settings.sectionOrder=BLOCKS.map(b=>b.id);
- const order=[...new Set([...data.settings.sectionOrder,...BLOCKS.map(b=>b.id)])].filter(id=>BLOCKS.some(b=>b.id===id));
+ const order=[...new Set([...data.settings.sectionOrder,...BLOCKS.map(b=>b.id),...data.settings.customBlocks.map(b=>b.id)])].filter(id=>BLOCKS.some(b=>b.id===id)||data.settings.customBlocks.some(b=>b.id===id));
  const cards=order.map(id=>{
+  const custom=data.settings.customBlocks.find(b=>b.id===id);if(custom)return customCard(custom);
   const b=BLOCKS.find(block=>block.id===id),visible=data.settings.sections?.[id]!==false;
   return '<div class="builder-card" draggable="true" data-block="'+esc(id)+'" tabindex="0" aria-label="'+esc(b.name)+'">'+
    '<span class="drag-handle" title="Drag to reorder">⠿</span><div class="builder-card-body"><strong>'+esc(b.name)+'</strong><small>'+esc(b.detail)+'</small></div>'+
@@ -111,8 +156,8 @@ function renderBuilder(){
  const pageButtons=[["home","Home"],["products","Products"],["projects","Gallery"],["about","About"],["contact","Contact"]].map(([key,label])=>'<button type="button" data-preview-page="'+key+'" class="'+(previewPage===key?"selected":"")+'">'+label+'</button>').join("");
  root.innerHTML='<div class="panel-header"><h2>Visual page builder</h2><p>Drag cards to reorder your homepage, switch sections on or off and see your unpublished edits instantly.</p></div>'+
  '<div class="builder-layout"><div class="builder-controls"><div class="builder-label">Homepage layout <span>Drag ⠿ to reorder</span></div>'+
- '<div id="builder-blocks">'+cards+'</div><p class="help-line">The hero stays at the top. To change its text and image, use the Homepage hero tab.</p>'+
- '<div class="builder-panel"><strong>Quick-edit homepage</strong><p>Changes appear immediately in the live preview.</p>'+
+ '<div id="builder-blocks">'+cards+'</div><div class="builder-add"><strong>Add a new section</strong><div class="builder-add-buttons">'+Object.entries(CUSTOM_TYPES).map(([id,t])=>'<button type="button" data-custom-add="'+id+'">+ '+esc(t.label)+'</button>').join("")+'</div></div><p class="help-line">The hero stays at the top. To change its text and image, use the Homepage hero tab.</p>'+
+ customEditPanel()+'<div class="builder-panel"><strong>Quick-edit homepage</strong><p>Changes appear immediately in the live preview.</p>'+
  fieldHTML("Hero headline","textarea","hero.title")+fieldHTML("Hero description","textarea","hero.description")+
  fieldHTML("Welcome headline",null,"home.introTitle")+fieldHTML("Closing banner headline",null,"home.ctaTitle")+
  '</div><div class="builder-panel"><strong>Tools</strong><div class="builder-tool-row"><button type="button" data-builder-action="reset">Restore default order</button><button type="button" data-builder-action="showall">Show all sections</button></div></div></div>'+
@@ -146,8 +191,8 @@ function builderClick(event){
  const pageKey=el.dataset.previewPage;
  if(pageKey){previewPage=pageKey;render();return;}
  const action=el.dataset.builderAction;
- if(action==="reset"){data.settings.sectionOrder=BLOCKS.map(b=>b.id);markDirty();render();updatePreview();}
- if(action==="showall"){BLOCKS.forEach(b=>{data.settings.sections[b.id]=true;});markDirty();render();updatePreview();}
+ if(action==="reset"){data.settings.sectionOrder=[...BLOCKS.map(b=>b.id),...data.settings.customBlocks.map(b=>b.id)];markDirty();render();updatePreview();}
+ if(action==="showall"){BLOCKS.forEach(b=>{data.settings.sections[b.id]=true;});data.settings.customBlocks.forEach(b=>b.visible=true);markDirty();render();updatePreview();}
 }
 
 function render(){
@@ -285,6 +330,8 @@ $("#editor-nav").addEventListener("click",event=>{
 $("#editor").addEventListener("change",event=>{
  const box=event.target.closest("[data-block-visible]");
  if(box && active==="builder"){putValue("settings.sections."+box.dataset.blockVisible,box.checked);}
+ const custom=event.target.closest("[data-custom-visible]");
+ if(custom&&active==="builder"){const idx=data.settings.customBlocks.findIndex(b=>b.id===custom.dataset.customVisible);if(idx>=0)putValue("settings.customBlocks."+idx+".visible",custom.checked);}
 });
 $("#editor").addEventListener("dragstart",event=>{
  const card=event.target.closest("[data-block]");if(!card)return;
