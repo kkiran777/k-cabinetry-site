@@ -18,3 +18,5 @@
 .builder-preview .builder-preview-tools{position:sticky;top:0;background:#fff;z-index:2;padding:6px 0}.builder-controls .builder-label{font-size:14px}
 
 .publish>button:not(.primary){padding:10px;border:1px solid #d3cab9;background:#f9f6ef;font-size:11px}
+
+.builder-add-buttons{grid-template-columns:repeat(2,minmax(0,1fr));max-height:340px;overflow:auto}

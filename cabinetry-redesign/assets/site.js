@@ -28,6 +28,25 @@
     const safeLink=/^(https:\/\/|\.\/|#|\/)/i.test(buttonUrl)?esc(buttonUrl):"./contact.html";
     const action=buttonText?'<a class="btn" href="'+safeLink+'">'+buttonText+' <span aria-hidden="true">↗</span></a>':"";
     const common='<div class="custom-section-copy"><p class="eyebrow dark">K CABINETRY / FEATURE</p><h2 class="title">'+heading+'</h2><p class="section-copy">'+body+'</p>'+action+'</div>';
+    const motion=["none","fade","float","zoom","slide"].includes(b.motion)?b.motion:"none";
+    const motionClass=' motion-'+motion;
+    if(type==="animated")return '<section class="section custom-block custom-motion-block'+motionClass+'" data-custom-id="'+id+'"><div class="shell custom-image-grid">'+
+      (image?'<img src="'+image+'" alt="'+heading+'" loading="lazy">':"")+common+'</div></section>';
+    if(type==="video"){
+      let video="";
+      const value=String(b.video||"").trim();
+      const youtube=value.match(/^https:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[&#?].*)?$/);
+      if(youtube)video='<iframe loading="lazy" title="'+heading+'" src="https://www.youtube-nocookie.com/embed/'+youtube[1]+'" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+      else if(/^https:\/\/.+\.mp4(?:\?.*)?$/i.test(value))video='<video controls playsinline preload="metadata" src="'+esc(value)+'"></video>';
+      return '<section class="section custom-block custom-video-block" data-custom-id="'+id+'"><div class="shell">'+common+'<div class="custom-video">'+video+'</div></div></section>';
+    }
+    if(type==="slider"){
+      const photos=String(b.images||"").split(/\n/).map(v=>safeImage(v.trim())).filter(Boolean).slice(0,12);
+      return '<section class="section custom-block custom-slider-block" data-custom-id="'+id+'"><div class="shell">'+common+
+      '<div class="custom-slides" aria-label="'+heading+'">'+photos.map((src,i)=>'<img src="'+src+'" alt="'+heading+' photo '+(i+1)+'" loading="lazy">').join('')+'</div></div></section>';
+    }
+    if(type==="columns")return '<section class="section custom-block custom-columns" data-custom-id="'+id+'"><div class="shell custom-two-columns">'+common+'<div class="section-copy">'+body+'</div></div></section>';
+    if(type==="marquee")return '<div class="custom-block custom-marquee" data-custom-id="'+id+'"><div class="marquee-track"><span>'+heading+' — '+body+' — '+heading+' — '+body+'</span></div></div>';
     if(type==="image")return '<section class="section custom-block custom-image-block" data-custom-id="'+id+'"><div class="shell custom-image-grid">'+(image?'<img src="'+image+'" alt="'+heading+'" loading="lazy">':"")+common+'</div></section>';
     if(type==="banner")return '<section class="section custom-block custom-banner" data-custom-id="'+id+'"'+(image?' style="background-image:linear-gradient(#10170dcc,#10170dcc),url(&quot;'+image+'&quot;)"':'')+'><div class="shell">'+common+'</div></section>';
     if(type==="spacer")return '<div class="custom-block custom-spacer" data-custom-id="'+id+'" aria-hidden="true"></div>';

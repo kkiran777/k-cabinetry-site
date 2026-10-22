@@ -101,10 +101,15 @@ function updatePreview(){
 }
 
 const CUSTOM_TYPES={
- text:{label:"Text section",description:"Heading, description and optional button"},
- image:{label:"Image + text",description:"Image beside editable text and a button"},
- banner:{label:"Full-width banner",description:"Statement text with optional background photo"},
- spacer:{label:"Section spacer",description:"A flexible vertical gap between sections"}
+ text:{label:"Text section",description:"Heading and button"},
+ image:{label:"Image + text",description:"Photo or animated GIF"},
+ banner:{label:"Full-width banner",description:"Hero-style photo"},
+ spacer:{label:"Section spacer",description:"Vertical spacing"},
+ animated:{label:"Animated image / motion",description:"GIF, WebP or floating image"},
+ video:{label:"Video feature",description:"YouTube or MP4"},
+ slider:{label:"Image carousel",description:"Autoplay gallery"},
+ columns:{label:"Two-column feature",description:"Split content"},
+ marquee:{label:"Scrolling message",description:"Animated text strip"}
 };
 
 const PAGE_NAMES={home:"Homepage",products:"Products page",projects:"Inspiration page",about:"About page",contact:"Contact page"};
@@ -128,7 +133,7 @@ function ensureCustom(){
 function newCustomBlock(type,original){
  ensureCustom();
  const id="custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,6);
- const b={id,type,title:"Your next great idea.",body:"Edit this section's text, photo and button in the page builder.",image:"",buttonText:"Learn more",buttonUrl:"./contact.html",visible:true,...(original||{})};
+ const b={id,type,title:"Your next great idea.",body:"Edit this section's text, photo and button in the page builder.",image:"",motion:"float",video:"",images:"",buttonText:"Learn more",buttonUrl:"./contact.html",visible:true,...(original||{})};
  b.id=id;b.type=type;b.page=previewPage;data.settings.customBlocks.push(b);currentOrder().push(id);
  markDirty();render();updatePreview();
 }
@@ -153,6 +158,9 @@ function customEditPanel(){
  fieldHTML("Heading",null,"settings.customBlocks."+i+".title")+
  fieldHTML("Description","textarea","settings.customBlocks."+i+".body")+
  (b.type!=="spacer"?fieldHTML("Section image / background","image","settings.customBlocks."+i+".image"):"")+
+ (b.type==="video"?fieldHTML("Video URL (YouTube or direct MP4)",null,"settings.customBlocks."+i+".video"):"")+
+ (b.type==="slider"?fieldHTML("Image URLs, one per line","textarea","settings.customBlocks."+i+".images"):"")+
+ (b.type==="animated"?fieldHTML("Motion: none, fade, float, zoom, slide",null,"settings.customBlocks."+i+".motion"):"")+
  (b.type!=="spacer"?fieldHTML("Button label",null,"settings.customBlocks."+i+".buttonText"):"")+
  (b.type!=="spacer"?fieldHTML("Button link",null,"settings.customBlocks."+i+".buttonUrl"):"")+
  '<button type="button" data-custom-done="1">Done editing</button></div>';
