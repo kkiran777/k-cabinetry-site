@@ -102,16 +102,30 @@ const CUSTOM_TYPES={
  banner:{label:"Full-width banner",description:"Statement text with optional background photo"},
  spacer:{label:"Section spacer",description:"A flexible vertical gap between sections"}
 };
+
+const PAGE_NAMES={home:"Homepage",products:"Products page",projects:"Inspiration page",about:"About page",contact:"Contact page"};
+function currentOrder(){
+ ensureCustom();
+ return previewPage==="home"?data.settings.sectionOrder:data.settings.pageBlocks[previewPage];
+}
+function setCurrentOrder(order){
+ if(previewPage==="home")data.settings.sectionOrder=order;
+ else data.settings.pageBlocks[previewPage]=order;
+}
+function customOnPage(){return data.settings.customBlocks.filter(b=>(b.page||"home")===previewPage);}
+
 function ensureCustom(){
  data.settings ||= {};
  data.settings.customBlocks ||= [];
  data.settings.sectionOrder ||= BLOCKS.map(b=>b.id);
+ data.settings.pageBlocks ||= {home:[],products:[],projects:[],about:[],contact:[]};
+ for(const p of Object.keys(PAGE_NAMES))data.settings.pageBlocks[p] ||= [];
 }
 function newCustomBlock(type,original){
  ensureCustom();
  const id="custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,6);
  const b={id,type,title:"Your next great idea.",body:"Edit this section's text, photo and button in the page builder.",image:"",buttonText:"Learn more",buttonUrl:"./contact.html",visible:true,...(original||{})};
- b.id=id;b.type=type;data.settings.customBlocks.push(b);data.settings.sectionOrder.push(id);
+ b.id=id;b.type=type;b.page=previewPage;data.settings.customBlocks.push(b);currentOrder().push(id);
  markDirty();render();updatePreview();
 }
 function customCard(b){
@@ -127,7 +141,7 @@ function customCard(b){
 }
 function customEditPanel(){
  const selected=window.kSelectedCustom;
- const b=data.settings.customBlocks.find(x=>x.id===selected);
+ const b=customOnPage().find(x=>x.id===selected);
  if(!b)return "";
  const i=data.settings.customBlocks.findIndex(x=>x.id===selected);
  return '<div class="builder-panel custom-editor"><strong>Editing: '+esc(CUSTOM_TYPES[b.type]?.label||"Custom section")+'</strong>'+
@@ -143,9 +157,11 @@ function renderBuilder(){
  const root=$("#editor");
  ensureCustom();
  if(!Array.isArray(data.settings.sectionOrder))data.settings.sectionOrder=BLOCKS.map(b=>b.id);
- const order=[...new Set([...data.settings.sectionOrder,...BLOCKS.map(b=>b.id),...data.settings.customBlocks.map(b=>b.id)])].filter(id=>BLOCKS.some(b=>b.id===id)||data.settings.customBlocks.some(b=>b.id===id));
+ const home=previewPage==="home";
+ const available=customOnPage();
+ const order=[...new Set([...(currentOrder()),...(home?BLOCKS.map(b=>b.id):[]),...available.map(b=>b.id)])].filter(id=>(home&&BLOCKS.some(b=>b.id===id))||available.some(b=>b.id===id));
  const cards=order.map(id=>{
-  const custom=data.settings.customBlocks.find(b=>b.id===id);if(custom)return customCard(custom);
+  const custom=available.find(b=>b.id===id);if(custom)return customCard(custom);
   const b=BLOCKS.find(block=>block.id===id),visible=data.settings.sections?.[id]!==false;
   return '<div class="builder-card" draggable="true" data-block="'+esc(id)+'" tabindex="0" aria-label="'+esc(b.name)+'">'+
    '<span class="drag-handle" title="Drag to reorder">⠿</span><div class="builder-card-body"><strong>'+esc(b.name)+'</strong><small>'+esc(b.detail)+'</small></div>'+
@@ -154,13 +170,13 @@ function renderBuilder(){
    '<button type="button" data-block-up="'+esc(id)+'" aria-label="Move up">↑</button><button type="button" data-block-down="'+esc(id)+'" aria-label="Move down">↓</button></div>';
  }).join("");
  const pageButtons=[["home","Home"],["products","Products"],["projects","Gallery"],["about","About"],["contact","Contact"]].map(([key,label])=>'<button type="button" data-preview-page="'+key+'" class="'+(previewPage===key?"selected":"")+'">'+label+'</button>').join("");
- root.innerHTML='<div class="panel-header"><h2>Visual page builder</h2><p>Drag cards to reorder your homepage, switch sections on or off and see your unpublished edits instantly.</p></div>'+
- '<div class="builder-layout"><div class="builder-controls"><div class="builder-label">Homepage layout <span>Drag ⠿ to reorder</span></div>'+
+ root.innerHTML='<div class="panel-header"><h2>Visual page builder</h2><p>Select a page, add or reorder its sections, and preview your unpublished edits instantly.</p></div>'+
+ '<div class="builder-layout"><div class="builder-controls"><div class="builder-label">'+esc(PAGE_NAMES[previewPage])+ ' layout <span>Drag ⠿ to reorder</span></div>'+
  '<div id="builder-blocks">'+cards+'</div><div class="builder-add"><strong>Add a new section</strong><div class="builder-add-buttons">'+Object.entries(CUSTOM_TYPES).map(([id,t])=>'<button type="button" data-custom-add="'+id+'">+ '+esc(t.label)+'</button>').join("")+'</div></div><p class="help-line">The hero stays at the top. To change its text and image, use the Homepage hero tab.</p>'+
- customEditPanel()+'<div class="builder-panel"><strong>Quick-edit homepage</strong><p>Changes appear immediately in the live preview.</p>'+
+ customEditPanel()+(home?'<div class="builder-panel"><strong>Quick-edit homepage</strong><p>Changes appear immediately in the live preview.</p>'+
  fieldHTML("Hero headline","textarea","hero.title")+fieldHTML("Hero description","textarea","hero.description")+
- fieldHTML("Welcome headline",null,"home.introTitle")+fieldHTML("Closing banner headline",null,"home.ctaTitle")+
- '</div><div class="builder-panel"><strong>Tools</strong><div class="builder-tool-row"><button type="button" data-builder-action="reset">Restore default order</button><button type="button" data-builder-action="showall">Show all sections</button></div></div></div>'+
+ fieldHTML("Welcome headline",null,"home.introTitle")+fieldHTML("Closing banner headline",null,"home.ctaTitle")+'</div>':'')+
+ '<div class="builder-panel"><strong>Tools</strong><div class="builder-tool-row"><button type="button" data-builder-action="reset">Restore default order</button><button type="button" data-builder-action="showall">Show all sections</button></div></div></div>'+
  '<div class="builder-preview"><div class="builder-preview-tools"><div class="preview-pages">'+pageButtons+'</div>'+
  '<div class="builder-size"><button type="button" data-preview-mode="desktop" class="'+(previewMode==="desktop"?"selected":"")+'">Desktop</button>'+
  '<button type="button" data-preview-mode="mobile" class="'+(previewMode==="mobile"?"selected":"")+'">Mobile</button></div></div>'+
@@ -170,7 +186,7 @@ function renderBuilder(){
  updatePreview();
 }
 function orderChange(from,to){
- const order=data.settings.sectionOrder;
+ const order=currentOrder();
  const fromIndex=order.indexOf(from),toIndex=order.indexOf(to);
  if(fromIndex<0||toIndex<0||fromIndex===toIndex)return;
  order.splice(fromIndex,1);order.splice(toIndex,0,from);
@@ -183,15 +199,15 @@ function builderClick(event){
  if(edit){active=edit;render();return;}
  const up=el.dataset.blockUp,down=el.dataset.blockDown;
  if(up||down){
-   const id=up||down,order=data.settings.sectionOrder,index=order.indexOf(id);
+   const id=up||down,order=currentOrder(),index=order.indexOf(id);
    const other=order[index+(up?-1:1)];if(other)orderChange(id,other);return;
  }
  const mode=el.dataset.previewMode;
  if(mode){previewMode=mode;$(".builder-viewport")?.classList.toggle("mobile",mode==="mobile");$(".builder-viewport")?.classList.toggle("desktop",mode!=="mobile");document.querySelectorAll("[data-preview-mode]").forEach(b=>b.classList.toggle("selected",b.dataset.previewMode===mode));return;}
  const pageKey=el.dataset.previewPage;
- if(pageKey){previewPage=pageKey;render();return;}
+ if(pageKey){previewPage=pageKey;window.kSelectedCustom=null;render();return;}
  const action=el.dataset.builderAction;
- if(action==="reset"){data.settings.sectionOrder=[...BLOCKS.map(b=>b.id),...data.settings.customBlocks.map(b=>b.id)];markDirty();render();updatePreview();}
+ if(action==="reset"){setCurrentOrder([...(previewPage==="home"?BLOCKS.map(b=>b.id):[]),...customOnPage().map(b=>b.id)]);markDirty();render();updatePreview();}
  if(action==="showall"){BLOCKS.forEach(b=>{data.settings.sections[b.id]=true;});data.settings.customBlocks.forEach(b=>b.visible=true);markDirty();render();updatePreview();}
 }
 
@@ -251,6 +267,7 @@ async function signIn(event){
    const item=await github("GET",DOC);
    sha=item.sha;data=JSON.parse(decode(item.content));
    if(!data.settings)throw Error("Content settings unavailable; please reload the page.");
+   ensureCustom();
    $("#login").hidden=true;$("#dashboard").hidden=false;$("#signout").hidden=false;
    $("#token").value="";
    active="builder";markClean();render();status("Connected. Choose a section to begin.");

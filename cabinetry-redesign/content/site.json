@@ -216,6 +216,13 @@
       "projects",
       "cta"
     ],
-    "customBlocks": []
+    "customBlocks": [],
+    "pageBlocks": {
+      "home": [],
+      "products": [],
+      "projects": [],
+      "about": [],
+      "contact": []
+    }
   }
 }

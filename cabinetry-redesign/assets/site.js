@@ -34,19 +34,18 @@
     return '<section class="section custom-block custom-text-block" data-custom-id="'+id+'"><div class="shell">'+common+'</div></section>';
   };
   const arrangeSections = d => {
-    if(page!=="home")return;
-    const order=d.settings?.sectionOrder||[];
+    const order=page==="home"?(d.settings?.sectionOrder||[]):(d.settings?.pageBlocks?.[page]||[]);
     const main=$("#main");if(!main)return;
     const selectors={ticker:".ticker",intro:".intro",collections:".collections",benefits:".benefits",projects:"section.projects",cta:".cta-photo"};
-    const nodes={};Object.entries(selectors).forEach(([key,selector])=>nodes[key]=main.querySelector(selector));
+    const nodes={};if(page==="home")Object.entries(selectors).forEach(([key,selector])=>nodes[key]=main.querySelector(selector));
     for(const block of (d.settings?.customBlocks||[])){
-      if(!block||!/^custom-[a-z0-9-]+$/.test(block.id||""))continue;
+      if(!block||(block.page||"home")!==page||!/^custom-[a-z0-9-]+$/.test(block.id||""))continue;
       const template=document.createElement("template");template.innerHTML=customBlockMarkup(block);
       const element=template.content.firstElementChild;if(!element)continue;
       main.appendChild(element);nodes[block.id]=element;
     }
     const hero=main.querySelector(".hero");
-    let preceding=hero;
+    let preceding=page==="home"?hero:main.lastElementChild;
     for(const id of [...new Set([...order,...Object.keys(nodes)])]){
       const node=nodes[id];if(!node)continue;
       preceding.after(node);preceding=node;
