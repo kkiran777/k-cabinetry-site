@@ -154,6 +154,7 @@ function customEditPanel(){
  '<button type="button" data-custom-done="1">Done editing</button></div>';
 }
 function renderBuilder(){
+ $("#editor-nav").innerHTML=sections.map(id=>'<button type="button" class="'+(id===active?"active":"")+'" data-tab="'+id+'">'+esc(schemas[id].title)+'</button>').join("");
  const root=$("#editor");
  ensureCustom();
  if(!Array.isArray(data.settings.sectionOrder))data.settings.sectionOrder=BLOCKS.map(b=>b.id);
@@ -172,7 +173,7 @@ function renderBuilder(){
  const pageButtons=[["home","Home"],["products","Products"],["projects","Gallery"],["about","About"],["contact","Contact"]].map(([key,label])=>'<button type="button" data-preview-page="'+key+'" class="'+(previewPage===key?"selected":"")+'">'+label+'</button>').join("");
  root.innerHTML='<div class="panel-header"><h2>Visual page builder</h2><p>Select a page, add or reorder its sections, and preview your unpublished edits instantly.</p></div>'+
  '<div class="builder-layout"><div class="builder-controls"><div class="builder-label">'+esc(PAGE_NAMES[previewPage])+ ' layout <span>Drag ⠿ to reorder</span></div>'+
- '<div id="builder-blocks">'+cards+'</div><div class="builder-add"><strong>Add a new section</strong><div class="builder-add-buttons">'+Object.entries(CUSTOM_TYPES).map(([id,t])=>'<button type="button" data-custom-add="'+id+'">+ '+esc(t.label)+'</button>').join("")+'</div></div><p class="help-line">The hero stays at the top. To change its text and image, use the Homepage hero tab.</p>'+
+ '<div id="builder-blocks">'+cards+'</div><div class="builder-add"><strong>Add a new section</strong><div class="builder-add-buttons">'+Object.entries(CUSTOM_TYPES).map(([id,t])=>'<button type="button" data-custom-add="'+id+'">+ '+esc(t.label)+'</button>').join("")+'</div></div><p class="help-line">Built-in page sections stay in place. Custom sections can be reordered and managed here.</p>'+
  customEditPanel()+(home?'<div class="builder-panel"><strong>Quick-edit homepage</strong><p>Changes appear immediately in the live preview.</p>'+
  fieldHTML("Hero headline","textarea","hero.title")+fieldHTML("Hero description","textarea","hero.description")+
  fieldHTML("Welcome headline",null,"home.introTitle")+fieldHTML("Closing banner headline",null,"home.ctaTitle")+'</div>':'')+
