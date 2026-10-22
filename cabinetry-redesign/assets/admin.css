@@ -20,3 +20,5 @@
 .publish>button:not(.primary){padding:10px;border:1px solid #d3cab9;background:#f9f6ef;font-size:11px}
 
 .builder-add-buttons{grid-template-columns:repeat(2,minmax(0,1fr));max-height:340px;overflow:auto}
+
+.canvas-tools{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}.canvas-tools button{background:#eee5d5;border:1px solid #c8b58f;padding:10px}.canvas-workspace{display:grid;grid-template-columns:minmax(300px,1fr) 300px;gap:20px}.design-stage{position:relative;height:600px;border:1px solid #d3c9b9;background:linear-gradient(120deg,#5a5b54,#a9a69d);overflow:hidden}.design-object{position:absolute;min-height:45px;padding:10px;cursor:grab;background:#f7edd9;border:2px dashed #a18d61;color:#29261f}.canvas-properties{max-height:800px;overflow:auto}.canvas-properties .field{margin-top:12px}@media(max-width:1000px){.canvas-workspace{grid-template-columns:1fr}}

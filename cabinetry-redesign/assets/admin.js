@@ -10,6 +10,7 @@ function undoRedo(undo){const source=undo?history:future,dest=undo?future:histor
 const $=(s,root=document)=>root.querySelector(s);
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const schemas={
+ canvas:{title:"Design canvas",description:"Position elements and motion effects"},
  builder:{title:"Visual page builder",description:"Drag, reorder, edit and live-preview your homepage."},
 
  announcement:{title:"Announcement bar",description:"Edit the thin banner at the top of your website.",fields:[["announcementEnabled","Show announcement bar","checkbox"],["announcement","Announcement text","textarea"]],basePath:"settings"},
@@ -39,7 +40,7 @@ const schemas={
  contact:{title:"Contact page",description:"The contact page copy and optional form endpoint.",fields:[
  ["eyebrow","Small heading"],["title","Page heading"],["introduction","Introduction","textarea"],["note","Form instructions","textarea"],["formEndpoint","HTTPS form submission endpoint"]]}
 };
-const sections=["builder","brand","design","announcement","navigation","sections","buttons","hero","home","benefits","products","projects","about","steps","contact","seo"];
+const sections=["canvas","builder","brand","design","announcement","navigation","sections","buttons","hero","home","benefits","products","projects","about","steps","contact","seo"];
 const status=(message,problem=false,selector="#editor-status")=>{
  const el=$(selector); if(!el)return;el.textContent=message||"";el.classList.toggle("error",!!problem);
 };
@@ -224,7 +225,39 @@ function builderClick(event){
  if(action==="showall"){BLOCKS.forEach(b=>{data.settings.sections[b.id]=true;});data.settings.customBlocks.forEach(b=>b.visible=true);markDirty();render();updatePreview();}
 }
 
+
+function renderCanvas(){
+ const conf=data.settings.designCanvas||{enabled:true,elements:[]};
+ const es=conf.elements||[];
+ $("#editor-nav").innerHTML=sections.map(id=>'<button data-tab="'+id+'" class="'+(id===active?"active":"")+'">'+esc(schemas[id].title)+'</button>').join("");
+ $("#editor").innerHTML='<div class="panel-header"><h2>Design canvas</h2><p>Add movable text, images, and buttons. Position in percentages for responsive layouts and publish with your site.</p></div>'+
+ '<div class="canvas-tools"><button data-canvas-add="text">+ Text</button><button data-canvas-add="image">+ Image</button><button data-canvas-add="button">+ Button</button><button data-canvas-toggle="1">'+(conf.enabled?"Disable overlay":"Enable overlay")+'</button></div>'+
+ '<div class="canvas-workspace"><div id="design-stage" class="design-stage">'+es.map((e,i)=>'<div draggable="true" data-canvas-item="'+i+'" class="design-object" style="left:'+Number(e.x||0)+'%;top:'+Number(e.y||0)+'%;width:'+Number(e.width||30)+'%">'+esc(e.text||e.type)+'</div>').join("")+'</div>'+
+ '<div class="canvas-properties">'+es.map((e,i)=>'<div class="builder-panel"><strong>'+esc(e.type)+' '+(i+1)+'</strong>'+
+ '<div class="field"><label>Text / description</label><input data-canvas-prop="'+i+'" data-key="text" value="'+esc(e.text)+'"></div>'+
+ '<div class="field"><label>Image URL</label><input data-canvas-prop="'+i+'" data-key="src" value="'+esc(e.src)+'"></div>'+
+ '<div class="field"><label>Link</label><input data-canvas-prop="'+i+'" data-key="href" value="'+esc(e.href)+'"></div>'+
+ '<div class="field"><label>Horizontal position (%)</label><input type="number" min="0" max="100" data-canvas-prop="'+i+'" data-key="x" value="'+Number(e.x||0)+'"></div>'+
+ '<div class="field"><label>Vertical position (%)</label><input type="number" min="0" max="100" data-canvas-prop="'+i+'" data-key="y" value="'+Number(e.y||0)+'"></div>'+
+ '<div class="field"><label>Width (%)</label><input type="number" min="5" max="100" data-canvas-prop="'+i+'" data-key="width" value="'+Number(e.width||30)+'"></div>'+
+ '<div class="field"><label>Font size (px)</label><input type="number" min="10" max="96" data-canvas-prop="'+i+'" data-key="fontSize" value="'+Number(e.fontSize||28)+'"></div>'+
+ '<div class="field"><label>Hex color</label><input data-canvas-prop="'+i+'" data-key="color" value="'+esc(e.color||"#ffffff")+'"></div>'+
+ '<div class="field"><label>Motion</label><select data-canvas-prop="'+i+'" data-key="motion">'+["none","fade","float","zoom","slide"].map(m=>'<option '+(e.motion===m?"selected":"")+'>'+m+'</option>').join("")+'</select></div>'+
+ '<button data-canvas-delete="'+i+'">Remove element</button></div>').join("")+'</div></div>';
+ const stage=$("#design-stage");
+ stage.addEventListener("dragstart",event=>{const item=event.target.closest("[data-canvas-item]");if(item)event.dataTransfer.setData("text/plain",item.dataset.canvasItem);});
+ stage.addEventListener("dragover",event=>event.preventDefault());
+ stage.addEventListener("drop",event=>{
+  event.preventDefault();const i=Number(event.dataTransfer.getData("text/plain")),bounds=stage.getBoundingClientRect();
+  if(!Number.isInteger(i)||!es[i])return;
+  snapshot();
+  es[i].x=Math.max(0,Math.min(100,Math.round((event.clientX-bounds.left)/bounds.width*100)));
+  es[i].y=Math.max(0,Math.min(100,Math.round((event.clientY-bounds.top)/bounds.height*100)));
+  markDirty();render();updatePreview();
+ });
+}
 function render(){
+ if(active==="canvas"){renderCanvas();return;}
  if(active==="builder"){renderBuilder();return;}
  const schema=schemas[active];if(!schema||!data)return;
  $("#editor-nav").innerHTML=sections.map(id=>'<button type="button" class="'+(id===active?"active":"")+'" data-tab="'+id+'" aria-current="'+(id===active?"page":"false")+'">'+esc(schemas[id].title)+'</button>').join("");
@@ -360,6 +393,7 @@ $("#editor-nav").addEventListener("click",event=>{
  if(target){active=target.dataset.tab;render();}
 });
 $("#editor").addEventListener("change",event=>{
+ const prop=event.target.closest("[data-canvas-prop]");if(prop&&active==="canvas"){const i=Number(prop.dataset.canvasProp),key=prop.dataset.key;if(!data.settings.designCanvas.elements[i])return;snapshot();data.settings.designCanvas.elements[i][key]=["x","y","width","fontSize"].includes(key)?Number(prop.value):prop.value;markDirty();render();updatePreview();return;}
  const box=event.target.closest("[data-block-visible]");
  if(box && active==="builder"){putValue("settings.sections."+box.dataset.blockVisible,box.checked);}
  const custom=event.target.closest("[data-custom-visible]");
@@ -383,6 +417,9 @@ $("#editor").addEventListener("change",event=>{
  if(el&&/\.(image|logo)$/.test(el.dataset.path))render();
 });
 $("#editor").addEventListener("click",event=>{
+ const add=event.target.closest("[data-canvas-add]");if(add&&active==="canvas"){snapshot();data.settings.designCanvas.elements.push({id:"el-"+Date.now(),type:add.dataset.canvasAdd,text:"New element",src:"",href:"./contact.html",x:10,y:20,width:30,fontSize:28,color:"#ffffff",motion:"none",visible:true});markDirty();render();updatePreview();return;}
+ const del=event.target.closest("[data-canvas-delete]");if(del&&active==="canvas"){snapshot();data.settings.designCanvas.elements.splice(Number(del.dataset.canvasDelete),1);markDirty();render();updatePreview();return;}
+ const toggle=event.target.closest("[data-canvas-toggle]");if(toggle&&active==="canvas"){snapshot();data.settings.designCanvas.enabled=!data.settings.designCanvas.enabled;markDirty();render();updatePreview();return;}
  if(active==="builder")builderClick(event);
  const upload=event.target.closest("[data-upload]");
  if(upload){uploadImage(upload.dataset.upload);return;}

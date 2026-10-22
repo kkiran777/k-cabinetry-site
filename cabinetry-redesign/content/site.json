@@ -224,6 +224,10 @@
       "about": [],
       "contact": []
     },
-    "pages": []
+    "pages": [],
+    "designCanvas": {
+      "enabled": true,
+      "elements": []
+    }
   }
 }

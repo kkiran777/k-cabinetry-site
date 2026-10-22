@@ -179,6 +179,27 @@
       '<button class="btn" type="submit">Prepare inquiry <span aria-hidden="true">↗</span></button><div class="form-status" role="status" aria-live="polite"></div>'+
       '<p class="tiny">Without a configured form service, this opens your email application to send the inquiry. No message is stored on the website.</p></form></section>';
   };
+
+  const canvasOverlay = d => {
+    const conf=d.settings?.designCanvas;if(!conf?.enabled)return;
+    const items=(conf.elements||[]).filter(x=>x&&x.visible!==false);
+    const main=$("#main");if(!main||!items.length)return;
+    const layer=document.createElement("div");layer.className="canvas-layer";layer.setAttribute("aria-label","Designed elements");
+    items.forEach(item=>{
+      const el=document.createElement(item.type==="image"?"img":item.type==="button"?"a":"div");
+      el.className="canvas-element motion-"+(["none","float","fade","zoom","slide"].includes(item.motion)?item.motion:"none");
+      el.dataset.canvasId=String(item.id||"");
+      const n=(v,min,max,fallback)=>Math.min(max,Math.max(min,Number.isFinite(Number(v))?Number(v):fallback));
+      el.style.left=n(item.x,0,100,10)+"%";el.style.top=n(item.y,0,100,20)+"%";
+      el.style.width=n(item.width,5,100,30)+"%";
+      el.style.fontSize=n(item.fontSize,10,96,28)+"px";
+      el.style.color=/^#[0-9a-f]{6}$/i.test(item.color||"")?item.color:"#ffffff";
+      if(item.type==="image"){el.src=String(item.src||"");el.alt=String(item.text||"Decorative image");el.loading="lazy";el.style.objectFit="contain";}
+      else {el.textContent=String(item.text||"New element");if(item.type==="button"){el.href=/^(https:\/\/|\.\/|#)/.test(item.href||"")?item.href:"./contact.html";el.classList.add("btn");}}
+      layer.appendChild(el);
+    });
+    main.prepend(layer);main.classList.add("canvas-main");
+  };
   const render = async (previewData=null) => {
     try {
       let d=previewData;
@@ -188,6 +209,7 @@
       $("#site").innerHTML=header(d)+'<main id="main">'+(sections[page]||home)(d)+'</main>'+footer(d);
       arrangeSections(d);
       applyVisibility(d);
+      canvasOverlay(d);
       $("#year").textContent=new Date().getFullYear();
       const head=$("#header"),toggle=$("#menu-toggle");
       const sticky=()=>head.classList.toggle("scrolled",scrollY>65);
