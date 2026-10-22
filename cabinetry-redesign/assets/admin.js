@@ -3,6 +3,10 @@
 const REPO="kkiran777/k-cabinetry-site",BRANCH="main",FOLDER="cabinetry-redesign";
 const DOC=FOLDER+"/content/site.json",API="https://api.github.com/repos/"+REPO+"/contents/";
 let token="",data=null,sha="",dirty=false,active="brand",busy=false;
+let history=[],future=[];
+function snapshot(){if(!data)return;history.push(JSON.stringify(data));if(history.length>50)history.shift();future=[];}
+function undoRedo(undo){const source=undo?history:future,dest=undo?future:history;if(!source.length)return;dest.push(JSON.stringify(data));data=JSON.parse(source.pop());markDirty();render();updatePreview();}
+
 const $=(s,root=document)=>root.querySelector(s);
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const schemas={
@@ -54,7 +58,7 @@ function getValue(path){return path.split(".").reduce((obj,key)=>obj?.[key],data
 function putValue(path,value){
  const parts=path.split(".");let obj=data;
  for(let i=0;i<parts.length-1;i++){if(obj[parts[i]]==null)return;obj=obj[parts[i]];}
- obj[parts[parts.length-1]]=value;markDirty();updatePreview();
+ snapshot();obj[parts[parts.length-1]]=value;markDirty();updatePreview();
 }
 function fieldHTML(label,type,path){
  const rawValue=getValue(path);
@@ -266,7 +270,7 @@ async function signIn(event){
  status("Connecting securely to GitHub…",false,"#login-status");
  try{
    const item=await github("GET",DOC);
-   sha=item.sha;data=JSON.parse(decode(item.content));
+   sha=item.sha;data=JSON.parse(decode(item.content));history=[];future=[];
    if(!data.settings)throw Error("Content settings unavailable; please reload the page.");
    ensureCustom();
    $("#login").hidden=true;$("#dashboard").hidden=false;$("#signout").hidden=false;
@@ -341,6 +345,8 @@ async function uploadImage(path){
 $("#login-form").addEventListener("submit",signIn);
 $("#signout").addEventListener("click",()=>{if(dirty&&!confirm("Discard changes not yet published?"))return;signOut();});
 $("#publish").addEventListener("click",publish);
+$("#undo")?.addEventListener("click",()=>undoRedo(true));
+$("#redo")?.addEventListener("click",()=>undoRedo(false));
 $("#editor-nav").addEventListener("click",event=>{
  const target=event.target.closest("[data-tab]");
  if(target){active=target.dataset.tab;render();}

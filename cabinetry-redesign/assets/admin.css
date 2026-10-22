@@ -16,3 +16,5 @@
 .builder-add{background:#fff9ed;border:1px dashed #ba9c62;padding:17px;margin-top:13px}.builder-add strong{font-size:12px}.builder-add-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.builder-add-buttons button{border:1px solid #c9b995;background:white;padding:12px 5px;font-size:11px;cursor:pointer}.builder-add-buttons button:hover{background:#eadfca}.custom-card{background:#f9f4e8}.custom-editor{border:2px solid #c9ad7a}.custom-editor>button{padding:10px 16px;background:#242820;color:#fff;border:0}.custom-editor .image-preview img{height:100%}@media(max-width:650px){.builder-add-buttons{grid-template-columns:1fr 1fr}}
 
 .builder-preview .builder-preview-tools{position:sticky;top:0;background:#fff;z-index:2;padding:6px 0}.builder-controls .builder-label{font-size:14px}
+
+.publish>button:not(.primary){padding:10px;border:1px solid #d3cab9;background:#f9f6ef;font-size:11px}
